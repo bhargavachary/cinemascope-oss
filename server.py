@@ -46,7 +46,8 @@ def load_library():
 def save_library(data):
     """Save the library data to JSON file."""
     with open(DATA_FILE, 'w', encoding='utf-8') as f:
-        json.dump(data, f, indent=4, ensure_ascii=False)
+        json.dump(data, f, indent=4)
+        f.write('\n')
 
 
 def fetch_omdb(title, content_type='Movie'):
@@ -241,7 +242,7 @@ def main():
 ╔══════════════════════════════════════════════════════════╗
 ║          🎬 Entertainment Tracker - Local Server         ║
 ╠══════════════════════════════════════════════════════════╣
-║  Open in browser:  http://localhost:{port}                 ║
+║  Open in browser:  http://localhost:{port:<20s}   ║
 ║                                                          ║
 ║  API Endpoints:                                          ║
 ║    GET    /api/library          - List all items         ║
