@@ -145,7 +145,10 @@ class TrackerHandler(SimpleHTTPRequestHandler):
             'title': body['title'],
             'type': body.get('type', 'Movie'),
             'status': body.get('status', 'Plan to Watch'),
+            'language': body.get('language', 'English'),
             'rating': body.get('rating', 0),
+            'genres': body.get('genres', []),
+            'imdbID': body.get('imdbID'),
             'tags': body.get('tags', [])
         }
 
@@ -167,7 +170,10 @@ class TrackerHandler(SimpleHTTPRequestHandler):
                     'title': body.get('title', item['title']),
                     'type': body.get('type', item['type']),
                     'status': body.get('status', item['status']),
+                    'language': body.get('language', item.get('language', 'English')),
                     'rating': body.get('rating', item['rating']),
+                    'genres': body.get('genres', item.get('genres', [])),
+                    'imdbID': body.get('imdbID', item.get('imdbID')),
                     'tags': body.get('tags', item['tags'])
                 }
                 save_library(library)
