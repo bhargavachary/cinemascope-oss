@@ -1,0 +1,14 @@
+# GitHub Pages configuration
+# Using a null theme so Jekyll doesn't process the HTML
+include:
+  - "data"
+  - "css"
+  - "js"
+  - "index.html"
+
+exclude:
+  - "scripts"
+  - "requirements.txt"
+  - "server.py"
+  - "README.md"
+  - ".gitignore"

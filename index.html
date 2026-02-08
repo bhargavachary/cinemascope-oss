@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entertainment Tracker</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <h1>🎬 Entertainment Tracker</h1>
+            <p class="subtitle">Movies &amp; Series I've watched or plan to watch</p>
+            <div id="mode-badge" class="mode-badge">Loading...</div>
+        </div>
+    </header>
+
+    <nav class="toolbar">
+        <div class="toolbar-content">
+            <div class="search-box">
+                <input type="text" id="search-input" placeholder="Search titles, tags..." aria-label="Search">
+            </div>
+            <div class="filter-group">
+                <select id="filter-status" aria-label="Filter by status">
+                    <option value="all">All Statuses</option>
+                    <option value="Watched">✅ Watched</option>
+                    <option value="Watching">🎬 Watching</option>
+                    <option value="Plan to Watch">📝 Plan to Watch</option>
+                    <option value="Recommended">🌟 Recommended</option>
+                </select>
+                <select id="filter-type" aria-label="Filter by type">
+                    <option value="all">All Types</option>
+                    <option value="Movie">🎥 Movie</option>
+                    <option value="Series">📺 Series</option>
+                </select>
+                <select id="sort-by" aria-label="Sort by">
+                    <option value="title">Title A-Z</option>
+                    <option value="rating-desc">Rating ↓</option>
+                    <option value="rating-asc">Rating ↑</option>
+                    <option value="id-desc">Newest</option>
+                    <option value="id-asc">Oldest</option>
+                </select>
+            </div>
+            <button id="add-item-btn" class="btn btn-primary" style="display:none;">+ Add Item</button>
+        </div>
+    </nav>
+
+    <main>
+        <section id="stats-section" class="stats-section">
+            <div class="stats-grid" id="stats-grid"></div>
+        </section>
+
+        <section id="library-section">
+            <div class="library-grid" id="library-grid">
+                <p class="loading">Loading library...</p>
+            </div>
+        </section>
+    </main>
+
+    <!-- Add/Edit Modal -->
+    <div id="item-modal" class="modal" style="display:none;">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">Add Item</h2>
+                <button class="modal-close" id="modal-close">&times;</button>
+            </div>
+            <form id="item-form">
+                <div class="form-group">
+                    <label for="form-title">Title *</label>
+                    <input type="text" id="form-title" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="form-type">Type *</label>
+                        <select id="form-type" required>
+                            <option value="Movie">Movie</option>
+                            <option value="Series">Series</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="form-status">Status *</label>
+                        <select id="form-status" required>
+                            <option value="Plan to Watch">Plan to Watch</option>
+                            <option value="Watching">Watching</option>
+                            <option value="Watched">Watched</option>
+                            <option value="Recommended">Recommended</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="form-rating">Rating (0-10)</label>
+                    <input type="number" id="form-rating" min="0" max="10" step="0.1" value="0">
+                </div>
+                <div class="form-group">
+                    <label for="form-tags">Tags (comma-separated)</label>
+                    <input type="text" id="form-tags" placeholder="Action, Thriller, Sci-Fi">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="form-cancel">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="form-submit">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Recommendations Modal -->
+    <div id="rec-modal" class="modal" style="display:none;">
+        <div class="modal-overlay"></div>
+        <div class="modal-content modal-wide">
+            <div class="modal-header">
+                <h2 id="rec-modal-title">Recommendations</h2>
+                <button class="modal-close" id="rec-modal-close">&times;</button>
+            </div>
+            <div id="rec-content">
+                <p class="loading">Fetching recommendations...</p>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>Entertainment Tracker &mdash; Data stored in <code>data/library.json</code></p>
+    </footer>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
