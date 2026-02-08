@@ -24,7 +24,7 @@ def infer_language(title, tags):
         return 'Kannada'
     
     # Check title for Indian language patterns
-    indian_titles = [
+    regional_language_titles = [
         'Kantara', 'Bison', 'Kaantha', 'Dhurandhar', 'Maranamass', 
         'Pravinkoodu Shappu', 'Kishkindha Kaandam', 'Bramayugam',
         'Maharaja', 'Drishyam', '12th Fail', '3 Idiots', 'Taare Zameen Par',
@@ -34,8 +34,8 @@ def infer_language(title, tags):
         'Sarvam Maya', 'Aan Paavam Pollathathu', 'Sister Midnight',
         'Thalavara', 'Bou Buttu Bhuta', 'Ronth'
     ]
-    for indian_title in indian_titles:
-        if indian_title.lower() in title.lower():
+    for regional_title in regional_language_titles:
+        if regional_title.lower() in title.lower():
             # Default to Hindi for generic Indian titles
             return 'Hindi'
     

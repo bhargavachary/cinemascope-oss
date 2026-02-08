@@ -215,10 +215,13 @@
             const genreEmoji = getGenreEmoji(genre);
             html += '<div class="section-header">' + genreEmoji + ' ' + escapeHtml(genre) + '</div>';
             html += '<div class="library-grid">';
-            // Remove duplicates (items with multiple genres)
-            const uniqueItems = itemsByGenre[genre].filter((item, index, self) =>
-                index === self.findIndex((t) => t.id === item.id)
-            );
+            // Remove duplicates (items with multiple genres) using Set for O(n) complexity
+            const seenIds = new Set();
+            const uniqueItems = itemsByGenre[genre].filter(item => {
+                if (seenIds.has(item.id)) return false;
+                seenIds.add(item.id);
+                return true;
+            });
             uniqueItems.forEach(item => {
                 html += renderCard(item);
             });
@@ -454,8 +457,8 @@
     function buildLinksHtml(title, imdbID) {
         const encodedTitle = encodeURIComponent(title);
         const imdbLink = imdbID
-            ? '<a href="https://www.imdb.com/title/' + escapeHtml(imdbID) + '/" target="_blank" rel="noopener" class="btn-link imdb-link">🎬 View on IMDB</a>'
-            : '<a href="https://www.imdb.com/find/?q=' + encodedTitle + '" target="_blank" rel="noopener" class="btn-link imdb-link">🔍 Search on IMDB</a>';
+            ? '<a href="https://www.imdb.com/title/' + escapeHtml(imdbID) + '/" target="_blank" rel="noopener" class="btn-link imdb-link">🎬 View on IMDb</a>'
+            : '<a href="https://www.imdb.com/find/?q=' + encodedTitle + '" target="_blank" rel="noopener" class="btn-link imdb-link">🔍 Search on IMDb</a>';
         return '<div class="rec-links">' +
             '<h3>🔗 External Links</h3>' +
             '<div class="rec-link-list">' +
@@ -473,7 +476,7 @@
         const linksHtml = buildLinksHtml(item.title, item.imdbID || null);
 
         if (isLocalMode) {
-            recContent.innerHTML = '<p class="loading">Fetching information from IMDB, Rotten Tomatoes, Metacritic...</p>' + linksHtml;
+            recContent.innerHTML = '<p class="loading">Fetching information from IMDb, Rotten Tomatoes, Metacritic...</p>' + linksHtml;
             recModal.style.display = 'flex';
 
             try {
@@ -514,8 +517,8 @@
                 imdbID = o.imdbID || null;
             }
             html += '<div class="rec-source">' +
-                '<h3>📊 OMDB / IMDB</h3>' +
-                (o.imdbRating ? '<div class="rec-score">IMDB: ' + escapeHtml(o.imdbRating) + '/10</div>' : '') +
+                '<h3>📊 OMDB / IMDb</h3>' +
+                (o.imdbRating ? '<div class="rec-score">IMDb: ' + escapeHtml(o.imdbRating) + '/10</div>' : '') +
                 (o.Metascore && o.Metascore !== 'N/A' ? '<div class="rec-detail">Metascore: ' + escapeHtml(o.Metascore) + '/100</div>' : '') +
                 (o.Plot ? '<div class="rec-detail">' + escapeHtml(o.Plot) + '</div>' : '') +
                 (o.Genre ? '<div class="rec-detail">Genre: ' + escapeHtml(o.Genre) + '</div>' : '') +
@@ -564,7 +567,7 @@
         let parts = [];
         if (omdb.Title) parts.push('"' + omdb.Title + '"');
         if (omdb.Year) parts.push('(' + omdb.Year + ')');
-        if (omdb.imdbRating && omdb.imdbRating !== 'N/A') parts.push('has an IMDB rating of ' + omdb.imdbRating + '/10');
+        if (omdb.imdbRating && omdb.imdbRating !== 'N/A') parts.push('has an IMDb rating of ' + omdb.imdbRating + '/10');
         if (omdb.Ratings) {
             omdb.Ratings.forEach(function (r) {
                 if (r.Source === 'Rotten Tomatoes') {
