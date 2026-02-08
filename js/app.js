@@ -344,7 +344,7 @@
                 '<div class="rec-detail">Type: ' + escapeHtml(item.type) + '</div>' +
                 '<div class="rec-detail">Status: ' + escapeHtml(item.status) + '</div>' +
                 (item.rating > 0 ? '<div class="rec-detail">Rating: ⭐ ' + item.rating + '/10</div>' : '') +
-                (item.tags && item.tags.length > 0 ? '<div class="rec-detail">Tags: ' + item.tags.map(function (t) { return escapeHtml(t); }).join(', ') + '</div>' : '') +
+                (item.tags && item.tags.length > 0 ? '<div class="rec-detail">Tags: ' + item.tags.map(t => escapeHtml(t)).join(', ') + '</div>' : '') +
                 '</div>' +
                 linksHtml;
             recModal.style.display = 'flex';
