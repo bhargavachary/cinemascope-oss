@@ -269,6 +269,16 @@ header {
     flex: 1;
 }
 
+.card-title.clickable {
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.card-title.clickable:hover {
+    color: var(--accent);
+    text-decoration: underline;
+}
+
 .card-rating {
     font-size: 0.85rem;
     font-weight: 700;
@@ -478,6 +488,57 @@ header {
 .rec-summary h3 {
     font-size: 1rem;
     margin-bottom: 0.5rem;
+}
+
+/* ===== External Links ===== */
+.rec-links {
+    margin-top: 1rem;
+    padding: 0.75rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+}
+
+.rec-links h3 {
+    font-size: 0.95rem;
+    margin-bottom: 0.5rem;
+    color: var(--accent);
+}
+
+.rec-link-list {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.btn-link {
+    display: inline-block;
+    padding: 0.4rem 0.8rem;
+    text-decoration: none;
+    border-radius: var(--radius);
+    font-weight: 600;
+    font-size: 0.8rem;
+    transition: background 0.2s;
+}
+
+.imdb-link {
+    background: rgba(245, 197, 24, 0.15);
+    color: #f5c518;
+    border: 1px solid rgba(245, 197, 24, 0.3);
+}
+
+.imdb-link:hover {
+    background: rgba(245, 197, 24, 0.25);
+}
+
+.streaming-link {
+    background: rgba(63, 185, 80, 0.15);
+    color: var(--green);
+    border: 1px solid rgba(63, 185, 80, 0.3);
+}
+
+.streaming-link:hover {
+    background: rgba(63, 185, 80, 0.25);
 }
 
 /* ===== Footer ===== */

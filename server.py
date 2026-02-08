@@ -242,7 +242,7 @@ def main():
 ╔══════════════════════════════════════════════════════════╗
 ║          🎬 Entertainment Tracker - Local Server         ║
 ╠══════════════════════════════════════════════════════════╣
-║  Open in browser:  http://localhost:{port:<20s}   ║
+║  Open in browser:  http://localhost:{port:<20}   ║
 ║                                                          ║
 ║  API Endpoints:                                          ║
 ║    GET    /api/library          - List all items         ║
