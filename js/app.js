@@ -178,18 +178,19 @@
         const ratingDisplay = item.rating > 0 ? '⭐ ' + item.rating + '/10' : '';
         const tagsHtml = (item.tags || []).map(t => '<span class="tag">' + escapeHtml(t) + '</span>').join('');
 
-        let actionsHtml = '';
+        let actionsHtml = '<div class="card-actions">';
         if (isLocalMode) {
-            actionsHtml = '<div class="card-actions">' +
-                '<button class="btn btn-small btn-secondary" onclick="app.editItem(' + item.id + ')">✏️ Edit</button>' +
-                '<button class="btn btn-small btn-rec" onclick="app.getRecommendations(' + item.id + ')">🔍 Info</button>' +
-                '<button class="btn btn-small btn-danger" onclick="app.deleteItem(' + item.id + ')">🗑️</button>' +
-                '</div>';
+            actionsHtml += '<button class="btn btn-small btn-secondary" onclick="app.editItem(' + item.id + ')">✏️ Edit</button>';
         }
+        actionsHtml += '<button class="btn btn-small btn-rec" onclick="app.showInfo(' + item.id + ')">🔍 Info</button>';
+        if (isLocalMode) {
+            actionsHtml += '<button class="btn btn-small btn-danger" onclick="app.deleteItem(' + item.id + ')">🗑️</button>';
+        }
+        actionsHtml += '</div>';
 
         return '<div class="item-card">' +
             '<div class="card-header">' +
-            '<span class="card-title">' + escapeHtml(item.title) + '</span>' +
+            '<span class="card-title clickable" onclick="app.showInfo(' + item.id + ')">' + escapeHtml(item.title) + '</span>' +
             (ratingDisplay ? '<span class="card-rating">' + ratingDisplay + '</span>' : '') +
             '</div>' +
             '<div class="card-meta">' +
@@ -299,34 +300,64 @@
         }
     }
 
-    // ===== Recommendations =====
-    async function getRecommendations(id) {
-        if (!isLocalMode) return;
+    // ===== Info & Recommendations =====
+    function buildLinksHtml(title, imdbID) {
+        const encodedTitle = encodeURIComponent(title);
+        const imdbLink = imdbID
+            ? '<a href="https://www.imdb.com/title/' + escapeHtml(imdbID) + '/" target="_blank" rel="noopener" class="btn-link imdb-link">🎬 IMDB Page</a>'
+            : '<a href="https://www.imdb.com/find/?q=' + encodedTitle + '" target="_blank" rel="noopener" class="btn-link imdb-link">🎬 Search on IMDB</a>';
+        return '<div class="rec-links">' +
+            '<h3>🔗 External Links</h3>' +
+            '<div class="rec-link-list">' +
+            imdbLink +
+            '<a href="https://www.justwatch.com/in/search?q=' + encodedTitle + '" target="_blank" rel="noopener" class="btn-link streaming-link">📺 Streaming (India)</a>' +
+            '</div>' +
+            '</div>';
+    }
+
+    async function showInfo(id) {
         const item = library.find(i => i.id === id);
         if (!item) return;
 
         recModalTitle.textContent = '🔍 ' + item.title;
-        recContent.innerHTML = '<p class="loading">Fetching information from IMDB, Rotten Tomatoes, Metacritic...</p>';
-        recModal.style.display = 'flex';
+        const linksHtml = buildLinksHtml(item.title, null);
 
-        try {
-            const resp = await fetch('/api/recommendations/' + encodeURIComponent(item.title) + '?type=' + encodeURIComponent(item.type));
-            if (resp.ok) {
-                const data = await resp.json();
-                renderRecommendations(data);
-            } else {
-                recContent.innerHTML = '<p class="rec-error">Failed to fetch recommendations. Server returned an error.</p>';
+        if (isLocalMode) {
+            recContent.innerHTML = '<p class="loading">Fetching information from IMDB, Rotten Tomatoes, Metacritic...</p>' + linksHtml;
+            recModal.style.display = 'flex';
+
+            try {
+                const resp = await fetch('/api/recommendations/' + encodeURIComponent(item.title) + '?type=' + encodeURIComponent(item.type));
+                if (resp.ok) {
+                    const data = await resp.json();
+                    renderRecommendations(data, item.title);
+                } else {
+                    recContent.innerHTML = '<p class="rec-error">Failed to fetch recommendations. Server returned an error.</p>' + linksHtml;
+                }
+            } catch (err) {
+                recContent.innerHTML = '<p class="rec-error">Could not connect to the recommendation service: ' + escapeHtml(err.message) + '</p>' + linksHtml;
             }
-        } catch (err) {
-            recContent.innerHTML = '<p class="rec-error">Could not connect to the recommendation service: ' + escapeHtml(err.message) + '</p>';
+        } else {
+            // Read-only mode: show item details and external links
+            recContent.innerHTML = '<div class="rec-source">' +
+                '<h3>📋 Details</h3>' +
+                '<div class="rec-detail">Type: ' + escapeHtml(item.type) + '</div>' +
+                '<div class="rec-detail">Status: ' + escapeHtml(item.status) + '</div>' +
+                (item.rating > 0 ? '<div class="rec-detail">Rating: ⭐ ' + item.rating + '/10</div>' : '') +
+                (item.tags && item.tags.length > 0 ? '<div class="rec-detail">Tags: ' + item.tags.map(t => escapeHtml(t)).join(', ') + '</div>' : '') +
+                '</div>' +
+                linksHtml;
+            recModal.style.display = 'flex';
         }
     }
 
-    function renderRecommendations(data) {
+    function renderRecommendations(data, title) {
         let html = '';
+        let imdbID = null;
 
         if (data.omdb) {
             const o = data.omdb;
+            imdbID = o.imdbID || null;
             html += '<div class="rec-source">' +
                 '<h3>📊 OMDB / IMDB</h3>' +
                 (o.imdbRating ? '<div class="rec-score">IMDB: ' + escapeHtml(o.imdbRating) + '/10</div>' : '') +
@@ -370,6 +401,7 @@
                 '</div>';
         }
 
+        html += buildLinksHtml(title, imdbID);
         recContent.innerHTML = html;
     }
 
@@ -426,7 +458,7 @@
     window.app = {
         editItem: openEditModal,
         deleteItem: deleteItem,
-        getRecommendations: getRecommendations
+        showInfo: showInfo
     };
 
     // Boot
