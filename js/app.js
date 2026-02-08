@@ -18,6 +18,7 @@
     const filterStatus = document.getElementById('filter-status');
     const filterType = document.getElementById('filter-type');
     const sortBy = document.getElementById('sort-by');
+    const viewMode = document.getElementById('view-mode');
     const addItemBtn = document.getElementById('add-item-btn');
     const statsGrid = document.getElementById('stats-grid');
     const libraryGrid = document.getElementById('library-grid');
@@ -31,7 +32,10 @@
     const formTitle = document.getElementById('form-title');
     const formType = document.getElementById('form-type');
     const formStatus = document.getElementById('form-status');
+    const formLanguage = document.getElementById('form-language');
     const formRating = document.getElementById('form-rating');
+    const formGenres = document.getElementById('form-genres');
+    const formImdbId = document.getElementById('form-imdb-id');
     const formTags = document.getElementById('form-tags');
     const formCancel = document.getElementById('form-cancel');
 
@@ -129,7 +133,135 @@
             libraryGrid.innerHTML = '<p class="loading">No items match your filters.</p>';
             return;
         }
-        libraryGrid.innerHTML = filtered.map(item => renderCard(item)).join('');
+
+        const currentViewMode = viewMode.value;
+        
+        if (currentViewMode === 'genre') {
+            renderGenreView(filtered);
+        } else {
+            renderTypeLanguageView(filtered);
+        }
+    }
+
+    function renderTypeLanguageView(items) {
+        // Group by Type (Movie/Series) then by Language
+        const moviesByLanguage = {};
+        const seriesByLanguage = {};
+
+        items.forEach(item => {
+            const lang = item.language || 'Other';
+            if (item.type === 'Movie') {
+                if (!moviesByLanguage[lang]) moviesByLanguage[lang] = [];
+                moviesByLanguage[lang].push(item);
+            } else {
+                if (!seriesByLanguage[lang]) seriesByLanguage[lang] = [];
+                seriesByLanguage[lang].push(item);
+            }
+        });
+
+        let html = '';
+
+        // Render Movies section
+        if (Object.keys(moviesByLanguage).length > 0) {
+            html += '<div class="section-header">🎥 Movies</div>';
+            Object.keys(moviesByLanguage).sort().forEach(lang => {
+                html += '<div class="subsection-header">' + escapeHtml(lang) + '</div>';
+                html += '<div class="library-grid">';
+                moviesByLanguage[lang].forEach(item => {
+                    html += renderCard(item);
+                });
+                html += '</div>';
+            });
+        }
+
+        // Render Series section
+        if (Object.keys(seriesByLanguage).length > 0) {
+            html += '<div class="section-header">📺 TV Series</div>';
+            Object.keys(seriesByLanguage).sort().forEach(lang => {
+                html += '<div class="subsection-header">' + escapeHtml(lang) + '</div>';
+                html += '<div class="library-grid">';
+                seriesByLanguage[lang].forEach(item => {
+                    html += renderCard(item);
+                });
+                html += '</div>';
+            });
+        }
+
+        libraryGrid.innerHTML = html;
+    }
+
+    function renderGenreView(items) {
+        // Group by Genre
+        const itemsByGenre = {};
+        const noGenreItems = [];
+
+        items.forEach(item => {
+            const genres = item.genres || [];
+            if (genres.length === 0) {
+                noGenreItems.push(item);
+            } else {
+                // Add item to each of its genres
+                genres.forEach(genre => {
+                    if (!itemsByGenre[genre]) itemsByGenre[genre] = [];
+                    itemsByGenre[genre].push(item);
+                });
+            }
+        });
+
+        let html = '';
+
+        // Render genre sections
+        Object.keys(itemsByGenre).sort().forEach(genre => {
+            const genreEmoji = getGenreEmoji(genre);
+            html += '<div class="section-header">' + genreEmoji + ' ' + escapeHtml(genre) + '</div>';
+            html += '<div class="library-grid">';
+            // Remove duplicates (items with multiple genres)
+            const uniqueItems = itemsByGenre[genre].filter((item, index, self) =>
+                index === self.findIndex((t) => t.id === item.id)
+            );
+            uniqueItems.forEach(item => {
+                html += renderCard(item);
+            });
+            html += '</div>';
+        });
+
+        // Render items without genres
+        if (noGenreItems.length > 0) {
+            html += '<div class="section-header">📋 Other</div>';
+            html += '<div class="library-grid">';
+            noGenreItems.forEach(item => {
+                html += renderCard(item);
+            });
+            html += '</div>';
+        }
+
+        libraryGrid.innerHTML = html;
+    }
+
+    function getGenreEmoji(genre) {
+        const emojiMap = {
+            'Action': '💥',
+            'Thriller': '😱',
+            'Drama': '🎭',
+            'Comedy': '😂',
+            'Sci-Fi': '🚀',
+            'Horror': '👻',
+            'Mystery': '🔍',
+            'Crime': '🔪',
+            'Fantasy': '🧙',
+            'Romance': '💕',
+            'Animation': '🎨',
+            'Noir': '🌑',
+            'Superhero': '🦸',
+            'Adventure': '🗺️',
+            'Epic': '⚔️',
+            'Political': '🏛️',
+            'Folk Horror': '🌿',
+            'Dark Comedy': '🃏',
+            'Time Travel': '⏰',
+            'Spy': '🕵️'
+        };
+        return emojiMap[genre] || '🎬';
     }
 
     function getFilteredLibrary() {
@@ -176,7 +308,9 @@
     function renderCard(item) {
         const statusClass = item.status.toLowerCase().replace(/\s+/g, '-');
         const ratingDisplay = item.rating > 0 ? '⭐ ' + item.rating + '/10' : '';
-        const tagsHtml = (item.tags || []).map(t => '<span class="tag">' + escapeHtml(t) + '</span>').join('');
+        // Show genres if available, otherwise show tags
+        const displayTags = item.genres && item.genres.length > 0 ? item.genres : (item.tags || []);
+        const tagsHtml = displayTags.map(t => '<span class="tag">' + escapeHtml(t) + '</span>').join('');
 
         let actionsHtml = '<div class="card-actions">';
         if (isLocalMode) {
@@ -196,6 +330,7 @@
             '<div class="card-meta">' +
             '<span class="badge badge-type">' + (item.type === 'Movie' ? '🎥' : '📺') + ' ' + escapeHtml(item.type) + '</span>' +
             '<span class="badge badge-status ' + statusClass + '">' + escapeHtml(item.status) + '</span>' +
+            (item.language ? '<span class="badge badge-language">' + escapeHtml(item.language) + '</span>' : '') +
             '</div>' +
             (tagsHtml ? '<div class="card-tags">' + tagsHtml + '</div>' : '') +
             actionsHtml +
@@ -209,7 +344,10 @@
         formTitle.value = '';
         formType.value = 'Movie';
         formStatus.value = 'Plan to Watch';
+        formLanguage.value = 'English';
         formRating.value = '0';
+        formGenres.value = '';
+        formImdbId.value = '';
         formTags.value = '';
         itemModal.style.display = 'flex';
     }
@@ -222,7 +360,10 @@
         formTitle.value = item.title;
         formType.value = item.type;
         formStatus.value = item.status;
+        formLanguage.value = item.language || 'English';
         formRating.value = item.rating;
+        formGenres.value = (item.genres || []).join(', ');
+        formImdbId.value = item.imdbID || '';
         formTags.value = (item.tags || []).join(', ');
         itemModal.style.display = 'flex';
     }
@@ -241,11 +382,20 @@
             .map(t => t.trim())
             .filter(t => t.length > 0);
 
+        const genres = formGenres.value
+            .split(',')
+            .map(t => t.trim())
+            .filter(t => t.length > 0)
+            .slice(0, 3); // Max 3 genres
+
         const itemData = {
             title: formTitle.value.trim(),
             type: formType.value,
             status: formStatus.value,
+            language: formLanguage.value,
             rating: parseFloat(formRating.value) || 0,
+            genres: genres,
+            imdbID: formImdbId.value.trim() || null,
             tags: tags
         };
 
@@ -304,8 +454,8 @@
     function buildLinksHtml(title, imdbID) {
         const encodedTitle = encodeURIComponent(title);
         const imdbLink = imdbID
-            ? '<a href="https://www.imdb.com/title/' + escapeHtml(imdbID) + '/" target="_blank" rel="noopener" class="btn-link imdb-link">🎬 IMDB Page</a>'
-            : '<a href="https://www.imdb.com/find/?q=' + encodedTitle + '" target="_blank" rel="noopener" class="btn-link imdb-link">🎬 Search on IMDB</a>';
+            ? '<a href="https://www.imdb.com/title/' + escapeHtml(imdbID) + '/" target="_blank" rel="noopener" class="btn-link imdb-link">🎬 View on IMDB</a>'
+            : '<a href="https://www.imdb.com/find/?q=' + encodedTitle + '" target="_blank" rel="noopener" class="btn-link imdb-link">🔍 Search on IMDB</a>';
         return '<div class="rec-links">' +
             '<h3>🔗 External Links</h3>' +
             '<div class="rec-link-list">' +
@@ -320,7 +470,7 @@
         if (!item) return;
 
         recModalTitle.textContent = '🔍 ' + item.title;
-        const linksHtml = buildLinksHtml(item.title, null);
+        const linksHtml = buildLinksHtml(item.title, item.imdbID || null);
 
         if (isLocalMode) {
             recContent.innerHTML = '<p class="loading">Fetching information from IMDB, Rotten Tomatoes, Metacritic...</p>' + linksHtml;
@@ -330,7 +480,7 @@
                 const resp = await fetch('/api/recommendations/' + encodeURIComponent(item.title) + '?type=' + encodeURIComponent(item.type));
                 if (resp.ok) {
                     const data = await resp.json();
-                    renderRecommendations(data, item.title);
+                    renderRecommendations(data, item.title, item.imdbID);
                 } else {
                     recContent.innerHTML = '<p class="rec-error">Failed to fetch recommendations. Server returned an error.</p>' + linksHtml;
                 }
@@ -343,7 +493,9 @@
                 '<h3>📋 Details</h3>' +
                 '<div class="rec-detail">Type: ' + escapeHtml(item.type) + '</div>' +
                 '<div class="rec-detail">Status: ' + escapeHtml(item.status) + '</div>' +
+                (item.language ? '<div class="rec-detail">Language: ' + escapeHtml(item.language) + '</div>' : '') +
                 (item.rating > 0 ? '<div class="rec-detail">Rating: ⭐ ' + item.rating + '/10</div>' : '') +
+                (item.genres && item.genres.length > 0 ? '<div class="rec-detail">Genres: ' + item.genres.map(t => escapeHtml(t)).join(', ') + '</div>' : '') +
                 (item.tags && item.tags.length > 0 ? '<div class="rec-detail">Tags: ' + item.tags.map(t => escapeHtml(t)).join(', ') + '</div>' : '') +
                 '</div>' +
                 linksHtml;
@@ -351,13 +503,16 @@
         }
     }
 
-    function renderRecommendations(data, title) {
+    function renderRecommendations(data, title, itemImdbID) {
         let html = '';
-        let imdbID = null;
+        let imdbID = itemImdbID || null;
 
         if (data.omdb) {
             const o = data.omdb;
-            imdbID = o.imdbID || null;
+            // Use OMDB imdbID if we don't have one already
+            if (!imdbID) {
+                imdbID = o.imdbID || null;
+            }
             html += '<div class="rec-source">' +
                 '<h3>📊 OMDB / IMDB</h3>' +
                 (o.imdbRating ? '<div class="rec-score">IMDB: ' + escapeHtml(o.imdbRating) + '/10</div>' : '') +
@@ -431,6 +586,7 @@
         filterStatus.addEventListener('change', renderLibrary);
         filterType.addEventListener('change', renderLibrary);
         sortBy.addEventListener('change', renderLibrary);
+        viewMode.addEventListener('change', renderLibrary);
         addItemBtn.addEventListener('click', openAddModal);
         modalClose.addEventListener('click', closeModal);
         formCancel.addEventListener('click', closeModal);

@@ -9,6 +9,11 @@
             "Upcoming",
             "Folklore",
             "Action"
+        ],
+        "imdbID": null,
+        "language": "Hindi",
+        "genres": [
+            "Action"
         ]
     },
     {
@@ -19,6 +24,11 @@
         "rating": 0,
         "tags": [
             "Mari Selvaraj Project"
+        ],
+        "imdbID": null,
+        "language": "Hindi",
+        "genres": [
+            "Mari Selvaraj Project"
         ]
     },
     {
@@ -27,7 +37,10 @@
         "type": "Movie",
         "status": "Plan to Watch",
         "rating": 0,
-        "tags": []
+        "tags": [],
+        "imdbID": null,
+        "language": "Hindi",
+        "genres": []
     },
     {
         "id": 4,
@@ -35,7 +48,10 @@
         "type": "Series",
         "status": "Plan to Watch",
         "rating": 0,
-        "tags": []
+        "tags": [],
+        "imdbID": null,
+        "language": "English",
+        "genres": []
     },
     {
         "id": 5,
@@ -43,7 +59,10 @@
         "type": "Movie",
         "status": "Plan to Watch",
         "rating": 0,
-        "tags": []
+        "tags": [],
+        "imdbID": null,
+        "language": "Japanese",
+        "genres": []
     },
     {
         "id": 6,
@@ -51,7 +70,10 @@
         "type": "Movie",
         "status": "Plan to Watch",
         "rating": 0,
-        "tags": []
+        "tags": [],
+        "imdbID": null,
+        "language": "Hindi",
+        "genres": []
     },
     {
         "id": 7,
@@ -62,6 +84,12 @@
         "tags": [
             "Dark Comedy",
             "Crime"
+        ],
+        "imdbID": null,
+        "language": "Hindi",
+        "genres": [
+            "Dark Comedy",
+            "Crime"
         ]
     },
     {
@@ -70,7 +98,10 @@
         "type": "Movie",
         "status": "Plan to Watch",
         "rating": 0,
-        "tags": []
+        "tags": [],
+        "imdbID": null,
+        "language": "Hindi",
+        "genres": []
     },
     {
         "id": 9,
@@ -81,6 +112,12 @@
         "tags": [
             "Noir",
             "Mystery"
+        ],
+        "imdbID": null,
+        "language": "English",
+        "genres": [
+            "Noir",
+            "Mystery"
         ]
     },
     {
@@ -89,7 +126,10 @@
         "type": "Movie",
         "status": "Plan to Watch",
         "rating": 0,
-        "tags": []
+        "tags": [],
+        "imdbID": null,
+        "language": "English",
+        "genres": []
     },
     {
         "id": 11,
@@ -97,7 +137,10 @@
         "type": "Movie",
         "status": "Plan to Watch",
         "rating": 0,
-        "tags": []
+        "tags": [],
+        "imdbID": null,
+        "language": "English",
+        "genres": []
     },
     {
         "id": 12,
@@ -105,7 +148,10 @@
         "type": "Series",
         "status": "Plan to Watch",
         "rating": 0,
-        "tags": []
+        "tags": [],
+        "imdbID": null,
+        "language": "English",
+        "genres": []
     },
     {
         "id": 13,
@@ -113,7 +159,10 @@
         "type": "Movie",
         "status": "Plan to Watch",
         "rating": 0,
-        "tags": []
+        "tags": [],
+        "imdbID": null,
+        "language": "Hindi",
+        "genres": []
     },
     {
         "id": 14,
@@ -121,7 +170,10 @@
         "type": "Movie",
         "status": "Plan to Watch",
         "rating": 0,
-        "tags": []
+        "tags": [],
+        "imdbID": null,
+        "language": "Hindi",
+        "genres": []
     },
     {
         "id": 15,
@@ -129,7 +181,10 @@
         "type": "Movie",
         "status": "Plan to Watch",
         "rating": 0,
-        "tags": []
+        "tags": [],
+        "imdbID": null,
+        "language": "Hindi",
+        "genres": []
     },
     {
         "id": 16,
@@ -139,6 +194,11 @@
         "rating": 0,
         "tags": [
             "Odia Drama"
+        ],
+        "imdbID": null,
+        "language": "Odia",
+        "genres": [
+            "Odia Drama"
         ]
     },
     {
@@ -147,7 +207,10 @@
         "type": "Movie",
         "status": "Plan to Watch",
         "rating": 0,
-        "tags": []
+        "tags": [],
+        "imdbID": null,
+        "language": "Hindi",
+        "genres": []
     },
     {
         "id": 18,
@@ -155,7 +218,10 @@
         "type": "Movie",
         "status": "Plan to Watch",
         "rating": 0,
-        "tags": []
+        "tags": [],
+        "imdbID": null,
+        "language": "Hindi",
+        "genres": []
     },
     {
         "id": 19,
@@ -165,6 +231,11 @@
         "rating": 0,
         "tags": [
             "Malayalam",
+            "Mystery"
+        ],
+        "imdbID": null,
+        "language": "Malayalam",
+        "genres": [
             "Mystery"
         ]
     },
@@ -177,6 +248,11 @@
         "tags": [
             "Malayalam",
             "Folk Horror"
+        ],
+        "imdbID": null,
+        "language": "Malayalam",
+        "genres": [
+            "Folk Horror"
         ]
     },
     {
@@ -188,6 +264,11 @@
         "tags": [
             "Noir",
             "Investigation"
+        ],
+        "imdbID": null,
+        "language": "Hindi",
+        "genres": [
+            "Noir"
         ]
     },
     {
@@ -199,6 +280,11 @@
         "tags": [
             "Hindi",
             "Thriller"
+        ],
+        "imdbID": null,
+        "language": "Hindi",
+        "genres": [
+            "Thriller"
         ]
     },
     {
@@ -208,6 +294,12 @@
         "status": "Recommended",
         "rating": 0,
         "tags": [
+            "Sci-Fi",
+            "Thriller"
+        ],
+        "imdbID": null,
+        "language": "English",
+        "genres": [
             "Sci-Fi",
             "Thriller"
         ]
@@ -221,15 +313,27 @@
         "tags": [
             "Sci-Fi",
             "Time Travel"
+        ],
+        "imdbID": null,
+        "language": "English",
+        "genres": [
+            "Sci-Fi",
+            "Time Travel"
         ]
     },
     {
         "id": 25,
-        "title": "Sh\u014dgun",
+        "title": "Shōgun",
         "type": "Series",
         "status": "Recommended",
         "rating": 0,
         "tags": [
+            "Political",
+            "Epic"
+        ],
+        "imdbID": null,
+        "language": "Japanese",
+        "genres": [
             "Political",
             "Epic"
         ]
@@ -244,6 +348,12 @@
             "Hindi",
             "Crime",
             "Drama"
+        ],
+        "imdbID": null,
+        "language": "Hindi",
+        "genres": [
+            "Crime",
+            "Drama"
         ]
     },
     {
@@ -253,6 +363,11 @@
         "status": "Watched",
         "rating": 10,
         "tags": [
+            "Classic"
+        ],
+        "imdbID": null,
+        "language": "English",
+        "genres": [
             "Classic"
         ]
     },
@@ -264,6 +379,11 @@
         "rating": 0,
         "tags": [
             "Classic"
+        ],
+        "imdbID": null,
+        "language": "English",
+        "genres": [
+            "Classic"
         ]
     },
     {
@@ -273,6 +393,11 @@
         "status": "Watched",
         "rating": 0,
         "tags": [
+            "Miniseries"
+        ],
+        "imdbID": null,
+        "language": "English",
+        "genres": [
             "Miniseries"
         ]
     },
@@ -284,6 +409,11 @@
         "rating": 0,
         "tags": [
             "Classic"
+        ],
+        "imdbID": null,
+        "language": "English",
+        "genres": [
+            "Classic"
         ]
     },
     {
@@ -293,6 +423,11 @@
         "status": "Watched",
         "rating": 0,
         "tags": [
+            "Classic"
+        ],
+        "imdbID": null,
+        "language": "English",
+        "genres": [
             "Classic"
         ]
     },
@@ -304,6 +439,11 @@
         "rating": 0,
         "tags": [
             "Sci-Fi"
+        ],
+        "imdbID": null,
+        "language": "English",
+        "genres": [
+            "Sci-Fi"
         ]
     },
     {
@@ -313,6 +453,11 @@
         "status": "Watched",
         "rating": 0,
         "tags": [
+            "Anime"
+        ],
+        "imdbID": null,
+        "language": "Japanese",
+        "genres": [
             "Anime"
         ]
     },
@@ -324,6 +469,11 @@
         "rating": 0,
         "tags": [
             "Animation"
+        ],
+        "imdbID": null,
+        "language": "English",
+        "genres": [
+            "Animation"
         ]
     },
     {
@@ -333,6 +483,11 @@
         "status": "Watched",
         "rating": 0,
         "tags": [
+            "Drama"
+        ],
+        "imdbID": null,
+        "language": "English",
+        "genres": [
             "Drama"
         ]
     },
@@ -344,6 +499,11 @@
         "rating": 0,
         "tags": [
             "Action"
+        ],
+        "imdbID": null,
+        "language": "English",
+        "genres": [
+            "Action"
         ]
     },
     {
@@ -353,6 +513,11 @@
         "status": "Watched",
         "rating": 0,
         "tags": [
+            "Sci-Fi"
+        ],
+        "imdbID": null,
+        "language": "English",
+        "genres": [
             "Sci-Fi"
         ]
     },
@@ -364,6 +529,11 @@
         "rating": 0,
         "tags": [
             "Action"
+        ],
+        "imdbID": null,
+        "language": "English",
+        "genres": [
+            "Action"
         ]
     },
     {
@@ -373,6 +543,11 @@
         "status": "Watched",
         "rating": 0,
         "tags": [
+            "Action"
+        ],
+        "imdbID": null,
+        "language": "English",
+        "genres": [
             "Action"
         ]
     },
@@ -384,6 +559,11 @@
         "rating": 0,
         "tags": [
             "Superhero"
+        ],
+        "imdbID": null,
+        "language": "English",
+        "genres": [
+            "Superhero"
         ]
     },
     {
@@ -393,6 +573,11 @@
         "status": "Watched",
         "rating": 0,
         "tags": [
+            "Superhero"
+        ],
+        "imdbID": null,
+        "language": "English",
+        "genres": [
             "Superhero"
         ]
     },
@@ -405,6 +590,12 @@
         "tags": [
             "Action",
             "Spy"
+        ],
+        "imdbID": null,
+        "language": "English",
+        "genres": [
+            "Action",
+            "Spy"
         ]
     },
     {
@@ -414,6 +605,11 @@
         "status": "Watched",
         "rating": 0,
         "tags": [
+            "Fantasy"
+        ],
+        "imdbID": null,
+        "language": "English",
+        "genres": [
             "Fantasy"
         ]
     },
@@ -426,6 +622,11 @@
         "tags": [
             "Tamil",
             "Thriller"
+        ],
+        "imdbID": null,
+        "language": "Tamil",
+        "genres": [
+            "Thriller"
         ]
     },
     {
@@ -436,6 +637,11 @@
         "rating": 0,
         "tags": [
             "Thriller"
+        ],
+        "imdbID": null,
+        "language": "Hindi",
+        "genres": [
+            "Thriller"
         ]
     },
     {
@@ -445,6 +651,11 @@
         "status": "Watched",
         "rating": 0,
         "tags": [
+            "Drama"
+        ],
+        "imdbID": null,
+        "language": "Hindi",
+        "genres": [
             "Drama"
         ]
     },
@@ -457,6 +668,12 @@
         "tags": [
             "Comedy",
             "Drama"
+        ],
+        "imdbID": null,
+        "language": "Hindi",
+        "genres": [
+            "Comedy",
+            "Drama"
         ]
     },
     {
@@ -466,6 +683,11 @@
         "status": "Watched",
         "rating": 0,
         "tags": [
+            "Drama"
+        ],
+        "imdbID": null,
+        "language": "Hindi",
+        "genres": [
             "Drama"
         ]
     },
@@ -477,6 +699,11 @@
         "rating": 0,
         "tags": [
             "Thriller"
+        ],
+        "imdbID": null,
+        "language": "English",
+        "genres": [
+            "Thriller"
         ]
     },
     {
@@ -485,7 +712,10 @@
         "type": "Movie",
         "status": "Watched",
         "rating": 0,
-        "tags": []
+        "tags": [],
+        "imdbID": null,
+        "language": "Hindi",
+        "genres": []
     },
     {
         "id": 51,
@@ -493,7 +723,10 @@
         "type": "Movie",
         "status": "Watched",
         "rating": 0,
-        "tags": []
+        "tags": [],
+        "imdbID": null,
+        "language": "Hindi",
+        "genres": []
     },
     {
         "id": 52,
@@ -501,7 +734,10 @@
         "type": "Movie",
         "status": "Watched",
         "rating": 0,
-        "tags": []
+        "tags": [],
+        "imdbID": null,
+        "language": "Hindi",
+        "genres": []
     },
     {
         "id": 53,
@@ -509,7 +745,10 @@
         "type": "Movie",
         "status": "Watched",
         "rating": 0,
-        "tags": []
+        "tags": [],
+        "imdbID": null,
+        "language": "Hindi",
+        "genres": []
     },
     {
         "id": 54,
@@ -517,7 +756,10 @@
         "type": "Movie",
         "status": "Watched",
         "rating": 0,
-        "tags": []
+        "tags": [],
+        "imdbID": null,
+        "language": "English",
+        "genres": []
     },
     {
         "id": 55,
@@ -525,7 +767,10 @@
         "type": "Movie",
         "status": "Watched",
         "rating": 0,
-        "tags": []
+        "tags": [],
+        "imdbID": null,
+        "language": "Hindi",
+        "genres": []
     },
     {
         "id": 56,
@@ -533,7 +778,10 @@
         "type": "Movie",
         "status": "Watched",
         "rating": 0,
-        "tags": []
+        "tags": [],
+        "imdbID": null,
+        "language": "Hindi",
+        "genres": []
     },
     {
         "id": 57,
@@ -541,7 +789,10 @@
         "type": "Movie",
         "status": "Watched",
         "rating": 0,
-        "tags": []
+        "tags": [],
+        "imdbID": null,
+        "language": "Hindi",
+        "genres": []
     },
     {
         "id": 58,
@@ -549,7 +800,10 @@
         "type": "Movie",
         "status": "Watched",
         "rating": 0,
-        "tags": []
+        "tags": [],
+        "imdbID": null,
+        "language": "Hindi",
+        "genres": []
     },
     {
         "id": 59,
@@ -557,7 +811,10 @@
         "type": "Movie",
         "status": "Watched",
         "rating": 0,
-        "tags": []
+        "tags": [],
+        "imdbID": null,
+        "language": "Hindi",
+        "genres": []
     },
     {
         "id": 60,
@@ -565,7 +822,10 @@
         "type": "Movie",
         "status": "Watched",
         "rating": 0,
-        "tags": []
+        "tags": [],
+        "imdbID": null,
+        "language": "Hindi",
+        "genres": []
     },
     {
         "id": 61,
@@ -573,7 +833,10 @@
         "type": "Movie",
         "status": "Watched",
         "rating": 0,
-        "tags": []
+        "tags": [],
+        "imdbID": null,
+        "language": "English",
+        "genres": []
     },
     {
         "id": 62,
@@ -581,7 +844,10 @@
         "type": "Movie",
         "status": "Watched",
         "rating": 0,
-        "tags": []
+        "tags": [],
+        "imdbID": null,
+        "language": "Hindi",
+        "genres": []
     },
     {
         "id": 63,
@@ -589,6 +855,9 @@
         "type": "Movie",
         "status": "Watched",
         "rating": 0,
-        "tags": []
+        "tags": [],
+        "imdbID": null,
+        "language": "Hindi",
+        "genres": []
     }
 ]
