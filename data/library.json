@@ -10,11 +10,17 @@
             "Folklore",
             "Action"
         ],
-        "imdbID": null,
+        "imdbID": "tt26439764",
         "language": "Hindi",
         "genres": [
             "Action"
-        ]
+        ],
+        "plot": "Exploring the origins of Kaadubettu Shiva during the Kadamba dynasty era, it delves into the untamed wilderness and forgotten lore surrounding his past.",
+        "runtime": "165 min",
+        "imdbRating": "8.5",
+        "metascore": "N/A",
+        "rottenTomatoes": null,
+        "wikipedia": null
     },
     {
         "id": 2,
@@ -25,11 +31,17 @@
         "tags": [
             "Mari Selvaraj Project"
         ],
-        "imdbID": null,
+        "imdbID": "tt11107010",
         "language": "Hindi",
         "genres": [
             "Mari Selvaraj Project"
-        ]
+        ],
+        "plot": "N/A",
+        "runtime": "N/A",
+        "imdbRating": "N/A",
+        "metascore": "N/A",
+        "rottenTomatoes": null,
+        "wikipedia": null
     },
     {
         "id": 3,
@@ -90,7 +102,13 @@
         "genres": [
             "Dark Comedy",
             "Crime"
-        ]
+        ],
+        "plot": null,
+        "runtime": null,
+        "imdbRating": null,
+        "metascore": null,
+        "rottenTomatoes": null,
+        "wikipedia": null
     },
     {
         "id": 8,
@@ -160,9 +178,15 @@
         "status": "Plan to Watch",
         "rating": 0,
         "tags": [],
-        "imdbID": null,
+        "imdbID": "tt33294533",
         "language": "Hindi",
-        "genres": []
+        "genres": [],
+        "plot": "Two patrol officers face mounting tensions during a night shift as they navigate dangerous calls while confronting their strained partnership and personal demons.",
+        "runtime": "122 min",
+        "imdbRating": "7.1",
+        "metascore": "N/A",
+        "rottenTomatoes": null,
+        "wikipedia": null
     },
     {
         "id": 14,

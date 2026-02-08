@@ -1,275 +1,340 @@
 #!/usr/bin/env python3
 """
-Local development server for Entertainment Tracker.
-Serves the static web app and provides REST API endpoints for:
-- CRUD operations on data/library.json
-- Fetching recommendations from OMDB API (IMDB, Rotten Tomatoes, Metacritic data)
+Local Admin Server (Flask)
+==========================
+Serves the static site locally and exposes admin API endpoints for
+metadata refresh and library edits.
 
 Usage:
-    python server.py
-    Then open http://localhost:8080 in your browser.
+    OMDB_API_KEY=your_key python3 server.py
+    Then open http://localhost:8080
 """
 
 import json
 import os
-import sys
-import urllib.parse
-import urllib.request
-from http.server import HTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
+from difflib import SequenceMatcher
+
+import requests
+from flask import Flask, jsonify, request, send_from_directory
 
 BASE_DIR = Path(__file__).parent.resolve()
-DATA_FILE = BASE_DIR / 'data' / 'library.json'
+DATA_FILE = BASE_DIR / "data" / "library.json"
 
-# OMDB API key - free tier at https://www.omdbapi.com/apikey.aspx
-# Set via environment variable or use the demo key
-OMDB_API_KEY = os.environ.get('OMDB_API_KEY', '')
+OMDB_API_KEY = os.environ.get("OMDB_API_KEY", "")
 
-CONTENT_TYPES = {
-    '.html': 'text/html',
-    '.css': 'text/css',
-    '.js': 'application/javascript',
-    '.json': 'application/json',
-    '.png': 'image/png',
-    '.jpg': 'image/jpeg',
-    '.svg': 'image/svg+xml',
-    '.ico': 'image/x-icon',
-}
+WIKIDATA_SEARCH = "https://www.wikidata.org/w/api.php"
+WIKIDATA_ENTITY = "https://www.wikidata.org/wiki/Special:EntityData/{qid}.json"
+WIKIPEDIA_SUMMARY = "https://en.wikipedia.org/api/rest_v1/page/summary/{title}"
+
+app = Flask(__name__, static_folder=None)
 
 
 def load_library():
-    """Load the library data from JSON file."""
-    with open(DATA_FILE, 'r', encoding='utf-8') as f:
+    with open(DATA_FILE, "r", encoding="utf-8") as f:
         return json.load(f)
 
 
 def save_library(data):
-    """Save the library data to JSON file."""
-    with open(DATA_FILE, 'w', encoding='utf-8') as f:
-        json.dump(data, f, indent=4)
-        f.write('\n')
+    with open(DATA_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=4, ensure_ascii=False)
+        f.write("\n")
 
 
-def fetch_omdb(title, content_type='Movie'):
-    """Fetch movie/series info from OMDB API (includes IMDB, RT, Metacritic)."""
+def normalize_title(value):
+    return "".join(ch for ch in value.lower() if ch.isalnum())
+
+
+def _omdb_get(params):
     if not OMDB_API_KEY:
         return None
-
-    media_type = 'movie' if content_type == 'Movie' else 'series'
-    params = urllib.parse.urlencode({
-        't': title,
-        'type': media_type,
-        'apikey': OMDB_API_KEY,
-        'plot': 'short'
-    })
-    url = 'https://www.omdbapi.com/?' + params
-
     try:
-        req = urllib.request.Request(url, headers={'User-Agent': 'EntertainmentTracker/1.0'})
-        with urllib.request.urlopen(req, timeout=10) as resp:
-            data = json.loads(resp.read().decode('utf-8'))
-            if data.get('Response') == 'True':
-                return data
-    except Exception as e:
-        print(f"OMDB fetch error for '{title}': {e}")
+        resp = requests.get("https://www.omdbapi.com/", params=params, timeout=10)
+        resp.raise_for_status()
+        data = resp.json()
+        if data.get("Response") == "True":
+            return data
+    except Exception:
+        return None
     return None
 
 
-class TrackerHandler(SimpleHTTPRequestHandler):
-    """HTTP request handler with REST API support."""
+def fetch_omdb_by_id(imdb_id):
+    if not imdb_id:
+        return None
+    return _omdb_get({"apikey": OMDB_API_KEY, "i": imdb_id, "plot": "short"})
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, directory=str(BASE_DIR), **kwargs)
 
-    def do_GET(self):
-        parsed = urllib.parse.urlparse(self.path)
-        path = parsed.path
+def fetch_omdb_by_title(title, media_type):
+    params = {"apikey": OMDB_API_KEY, "t": title, "plot": "short"}
+    if media_type:
+        params["type"] = media_type
+    data = _omdb_get(params)
+    if data:
+        return data
 
-        # API routes
-        if path == '/api/health':
-            self.send_json({'status': 'ok', 'mode': 'local'})
-        elif path == '/api/library':
-            self.send_json(load_library())
-        elif path.startswith('/api/recommendations/'):
-            title = urllib.parse.unquote(path[len('/api/recommendations/'):])
-            query = urllib.parse.parse_qs(parsed.query)
-            content_type = query.get('type', ['Movie'])[0]
-            self.handle_recommendations(title, content_type)
-        else:
-            # Serve static files
-            super().do_GET()
+    try:
+        params = {"apikey": OMDB_API_KEY, "s": title}
+        if media_type:
+            params["type"] = media_type
+        resp = requests.get("https://www.omdbapi.com/", params=params, timeout=10)
+        resp.raise_for_status()
+        payload = resp.json()
+        if payload.get("Response") != "True":
+            return None
+        candidates = payload.get("Search", [])
+        if not candidates:
+            return None
+        target = normalize_title(title)
+        best = None
+        best_score = 0
+        for c in candidates:
+            score = SequenceMatcher(None, target, normalize_title(c.get("Title", ""))).ratio()
+            if score > best_score:
+                best_score = score
+                best = c
+        if best and best_score >= 0.72:
+            return fetch_omdb_by_id(best.get("imdbID"))
+    except Exception:
+        return None
+    return None
 
-    def do_POST(self):
-        if self.path == '/api/library':
-            self.handle_add_item()
-        else:
-            self.send_error(404)
 
-    def do_PUT(self):
-        if self.path.startswith('/api/library/'):
-            try:
-                item_id = int(self.path.split('/')[-1])
-                self.handle_update_item(item_id)
-            except ValueError:
-                self.send_error(400, 'Invalid item ID')
-        else:
-            self.send_error(404)
-
-    def do_DELETE(self):
-        if self.path.startswith('/api/library/'):
-            try:
-                item_id = int(self.path.split('/')[-1])
-                self.handle_delete_item(item_id)
-            except ValueError:
-                self.send_error(400, 'Invalid item ID')
-        else:
-            self.send_error(404)
-
-    def handle_add_item(self):
-        """Add a new item to the library."""
-        body = self.read_body()
-        if body is None:
-            return
-
-        library = load_library()
-        max_id = max((item['id'] for item in library), default=0)
-        body['id'] = max_id + 1
-
-        # Validate required fields
-        if not body.get('title'):
-            self.send_error(400, 'Title is required')
-            return
-
-        item = {
-            'id': body['id'],
-            'title': body['title'],
-            'type': body.get('type', 'Movie'),
-            'status': body.get('status', 'Plan to Watch'),
-            'language': body.get('language', 'English'),
-            'rating': body.get('rating', 0),
-            'genres': body.get('genres', []),
-            'imdbID': body.get('imdbID'),
-            'tags': body.get('tags', [])
+def wikidata_search(title, media_type):
+    try:
+        params = {
+            "action": "wbsearchentities",
+            "search": title,
+            "language": "en",
+            "format": "json",
+            "limit": 5,
         }
-
-        library.append(item)
-        save_library(library)
-        self.send_json(item, status=201)
-
-    def handle_update_item(self, item_id):
-        """Update an existing item in the library."""
-        body = self.read_body()
-        if body is None:
-            return
-
-        library = load_library()
-        for i, item in enumerate(library):
-            if item['id'] == item_id:
-                library[i] = {
-                    'id': item_id,
-                    'title': body.get('title', item['title']),
-                    'type': body.get('type', item['type']),
-                    'status': body.get('status', item['status']),
-                    'language': body.get('language', item.get('language', 'English')),
-                    'rating': body.get('rating', item['rating']),
-                    'genres': body.get('genres', item.get('genres', [])),
-                    'imdbID': body.get('imdbID', item.get('imdbID')),
-                    'tags': body.get('tags', item['tags'])
-                }
-                save_library(library)
-                self.send_json(library[i])
-                return
-
-        self.send_error(404, 'Item not found')
-
-    def handle_delete_item(self, item_id):
-        """Delete an item from the library."""
-        library = load_library()
-        new_library = [item for item in library if item['id'] != item_id]
-        if len(new_library) == len(library):
-            self.send_error(404, 'Item not found')
-            return
-        save_library(new_library)
-        self.send_json({'deleted': item_id})
-
-    def handle_recommendations(self, title, content_type):
-        """Fetch recommendations from OMDB (includes IMDB, Rotten Tomatoes, Metacritic)."""
-        result = {}
-
-        omdb_data = fetch_omdb(title, content_type)
-        if omdb_data:
-            result['omdb'] = omdb_data
-
-        if not result:
-            result['error'] = 'No data found. Set OMDB_API_KEY environment variable for full data.'
-            if not OMDB_API_KEY:
-                result['hint'] = 'Get a free API key at https://www.omdbapi.com/apikey.aspx and run: OMDB_API_KEY=your_key python server.py'
-
-        self.send_json(result)
-
-    def read_body(self):
-        """Read and parse JSON request body."""
-        try:
-            length = int(self.headers.get('Content-Length', 0))
-            raw = self.rfile.read(length)
-            return json.loads(raw.decode('utf-8'))
-        except (ValueError, json.JSONDecodeError) as e:
-            self.send_error(400, f'Invalid JSON: {e}')
+        r = requests.get(WIKIDATA_SEARCH, params=params, timeout=10)
+        r.raise_for_status()
+        results = r.json().get("search", [])
+        if not results:
             return None
 
-    def send_json(self, data, status=200):
-        """Send a JSON response."""
-        body = json.dumps(data, ensure_ascii=False).encode('utf-8')
-        self.send_response(status)
-        self.send_header('Content-Type', 'application/json')
-        self.send_header('Content-Length', str(len(body)))
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.end_headers()
-        self.wfile.write(body)
+        for item in results:
+            desc = (item.get("description") or "").lower()
+            if media_type == "movie" and "film" in desc:
+                return item.get("id")
+            if media_type == "series" and ("television" in desc or "tv" in desc or "series" in desc):
+                return item.get("id")
 
-    def do_OPTIONS(self):
-        """Handle CORS preflight."""
-        self.send_response(200)
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
-        self.end_headers()
-
-    def log_message(self, format, *args):
-        """Suppress noisy request logging, show only API calls."""
-        if '/api/' in (args[0] if args else ''):
-            super().log_message(format, *args)
+        return results[0].get("id")
+    except Exception:
+        return None
 
 
-def main():
-    port = int(os.environ.get('PORT', 8080))
-    server = HTTPServer(('0.0.0.0', port), TrackerHandler)
-    print(f"""
-╔══════════════════════════════════════════════════════════╗
-║          🎬 Entertainment Tracker - Local Server         ║
-╠══════════════════════════════════════════════════════════╣
-║  Open in browser:  http://localhost:{port:<20}   ║
-║                                                          ║
-║  API Endpoints:                                          ║
-║    GET    /api/library          - List all items         ║
-║    POST   /api/library          - Add new item           ║
-║    PUT    /api/library/<id>     - Update item            ║
-║    DELETE /api/library/<id>     - Delete item            ║
-║    GET    /api/recommendations/<title> - Get ratings     ║
-║                                                          ║
-║  For IMDB/RT/Metacritic data, set OMDB_API_KEY:         ║
-║    OMDB_API_KEY=your_key python server.py                ║
-║    Get free key: https://www.omdbapi.com/apikey.aspx     ║
-║                                                          ║
-║  Press Ctrl+C to stop                                    ║
-╚══════════════════════════════════════════════════════════╝
-""")
+def wikidata_entity(qid):
     try:
-        server.serve_forever()
-    except KeyboardInterrupt:
-        print("\n👋 Server stopped.")
-        server.server_close()
+        r = requests.get(WIKIDATA_ENTITY.format(qid=qid), timeout=10)
+        r.raise_for_status()
+        return r.json()["entities"][qid]
+    except Exception:
+        return None
 
 
-if __name__ == '__main__':
-    main()
+def entity_claim(claims, pid):
+    claim = claims.get(pid, [])
+    if not claim:
+        return None
+    mainsnak = claim[0].get("mainsnak", {})
+    datavalue = mainsnak.get("datavalue", {})
+    return datavalue.get("value")
+
+
+def wikipedia_summary(title):
+    try:
+        r = requests.get(WIKIPEDIA_SUMMARY.format(title=title.replace(" ", "%20")), timeout=10)
+        if r.status_code != 200:
+            return None
+        return r.json()
+    except Exception:
+        return None
+
+
+def fetch_wikidata_fallback(title, media_type):
+    qid = wikidata_search(title, media_type)
+    if not qid:
+        return {}
+    entity = wikidata_entity(qid)
+    if not entity:
+        return {}
+
+    claims = entity.get("claims", {})
+    imdb_id = entity_claim(claims, "P345")
+    runtime = entity_claim(claims, "P2047")
+    sitelinks = entity.get("sitelinks", {})
+    wikipedia_title = sitelinks.get("enwiki", {}).get("title")
+
+    meta = {}
+    if imdb_id:
+        meta["imdb_id"] = imdb_id
+    if wikipedia_title:
+        meta["wikipedia"] = f"https://en.wikipedia.org/wiki/{wikipedia_title.replace(' ', '_')}"
+        summary = wikipedia_summary(wikipedia_title)
+        if summary and summary.get("extract"):
+            meta["plot"] = summary.get("extract")
+    if runtime and isinstance(runtime, dict):
+        amount = runtime.get("amount")
+        if amount:
+            meta["runtime"] = f"{amount.replace('+', '')} min"
+
+    return meta
+
+
+def refresh_metadata(item):
+    title = item.get("title", "")
+    media_type = "movie" if item.get("type", "Movie") == "Movie" else "series"
+
+    omdb = None
+    if OMDB_API_KEY:
+        if item.get("imdbID"):
+            omdb = fetch_omdb_by_id(item.get("imdbID"))
+        if not omdb:
+            omdb = fetch_omdb_by_title(title, media_type)
+
+    ratings = {}
+    if omdb:
+        ratings = {r.get("Source"): r.get("Value") for r in omdb.get("Ratings", [])}
+
+    meta = {
+        "imdbID": omdb.get("imdbID") if omdb else item.get("imdbID"),
+        "imdb_rating": omdb.get("imdbRating") if omdb else "",
+        "metascore": omdb.get("Metascore") if omdb else "",
+        "rotten_tomatoes": ratings.get("Rotten Tomatoes", ""),
+        "plot": omdb.get("Plot") if omdb else "",
+        "runtime": omdb.get("Runtime") if omdb else "",
+    }
+
+    # Fallback/Enhancement via Wikidata (The "custom script" logic)
+    # We try this if we are missing data OR if the user asked for a refresh (which is this function).
+    # We prioritize Wikidata for Plot if OMDB's is short or missing.
+    wiki_meta = fetch_wikidata_fallback(title, media_type)
+    
+    if wiki_meta:
+        # Fill missing fields
+        for key, value in wiki_meta.items():
+            if not meta.get(key):
+                meta[key] = value
+        
+        # specific overwrite logic
+        if wiki_meta.get("plot") and len(wiki_meta.get("plot")) > len(meta.get("plot", "")):
+            meta["plot"] = wiki_meta["plot"]
+        if wiki_meta.get("wikipedia"):
+             meta["wikipedia"] = wiki_meta["wikipedia"]
+
+    meta["imdb_id"] = meta.get("imdbID") or meta.get("imdb_id")
+
+    item["imdbID"] = meta.get("imdbID") or item.get("imdbID")
+    item["plot"] = meta.get("plot") or item.get("plot")
+    item["runtime"] = meta.get("runtime") or item.get("runtime")
+    item["imdbRating"] = meta.get("imdb_rating") or item.get("imdbRating")
+    item["metascore"] = meta.get("metascore") or item.get("metascore")
+    item["rottenTomatoes"] = meta.get("rotten_tomatoes") or item.get("rottenTomatoes")
+    item["wikipedia"] = meta.get("wikipedia") or item.get("wikipedia")
+
+    return meta
+
+
+@app.after_request
+def add_cors_headers(response):
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    return response
+
+
+@app.route("/")
+def index():
+    return send_from_directory(str(BASE_DIR), "index.html")
+
+
+@app.route("/<path:path>")
+def static_files(path):
+    return send_from_directory(str(BASE_DIR), path)
+
+
+@app.route("/api/health")
+def api_health():
+    return jsonify({"status": "ok", "mode": "local"})
+
+
+@app.route("/api/library", methods=["GET"])
+def api_library():
+    return jsonify(load_library())
+
+
+@app.route("/api/library", methods=["POST"])
+def api_add_item():
+    library = load_library()
+    body = request.json or {}
+    max_id = max((item["id"] for item in library), default=0)
+    body["id"] = max_id + 1
+    if not body.get("title"):
+        return jsonify({"error": "Title is required"}), 400
+    item = {
+        "id": body["id"],
+        "title": body["title"],
+        "type": body.get("type", "Movie"),
+        "status": body.get("status", "Plan to Watch"),
+        "language": body.get("language", "English"),
+        "rating": body.get("rating", 0),
+        "genres": body.get("genres", []),
+        "imdbID": body.get("imdbID"),
+        "tags": body.get("tags", [])
+    }
+    library.append(item)
+    save_library(library)
+    return jsonify(item), 201
+
+
+@app.route("/api/library/<int:item_id>", methods=["PUT"])
+def api_update_item(item_id):
+    library = load_library()
+    body = request.json or {}
+    for i, item in enumerate(library):
+        if item["id"] == item_id:
+            library[i] = {
+                **item,
+                "title": body.get("title", item["title"]),
+                "type": body.get("type", item["type"]),
+                "status": body.get("status", item["status"]),
+                "language": body.get("language", item.get("language", "English")),
+                "rating": body.get("rating", item.get("rating", 0)),
+                "genres": body.get("genres", item.get("genres", [])),
+                "imdbID": body.get("imdbID", item.get("imdbID")),
+                "tags": body.get("tags", item.get("tags", []))
+            }
+            save_library(library)
+            return jsonify(library[i])
+    return jsonify({"error": "Item not found"}), 404
+
+
+@app.route("/api/library/<int:item_id>", methods=["DELETE"])
+def api_delete_item(item_id):
+    library = load_library()
+    new_library = [item for item in library if item["id"] != item_id]
+    if len(new_library) == len(library):
+        return jsonify({"error": "Item not found"}), 404
+    save_library(new_library)
+    return jsonify({"deleted": item_id})
+
+
+@app.route("/api/refresh_metadata/<int:item_id>", methods=["POST"])
+def api_refresh_metadata(item_id):
+    library = load_library()
+    for item in library:
+        if item["id"] == item_id:
+            meta = refresh_metadata(item)
+            save_library(library)
+            return jsonify({"item": meta})
+    return jsonify({"error": "Item not found"}), 404
+
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 8080))
+    print(f"\nLocal admin server running at http://localhost:{port}\n")
+    app.run(host="0.0.0.0", port=port)

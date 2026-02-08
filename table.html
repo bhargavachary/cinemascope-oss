@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎬 Bhargav's Cinemascope</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg:           #0a0a0f;
+            --bg-surface:   #13131a;
+            --bg-elevated:  #1a1a24;
+            --border:       #2a2a35;
+            --text:         #eeeef0;
+            --text-muted:   #7a7a8e;
+            --accent:       #6366f1;
+            --watched:      #22c55e;
+            --recommended:  #f59e0b;
+            --planned:      #3b82f6;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .site-header {
+            padding: 40px 40px 0;
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+        }
+        .site-header h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+        .tagline {
+            color: var(--text-muted);
+            font-size: 0.88rem;
+            margin-top: 6px;
+            font-weight: 400;
+        }
+        .cta-button {
+            background: var(--accent);
+            color: #fff;
+            padding: 10px 16px;
+            border-radius: 999px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            text-decoration: none;
+            border: 1px solid transparent;
+        }
+        .cta-button:hover { filter: brightness(1.05); }
+
+        .filter-bar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(10, 10, 15, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border);
+            padding: 14px 40px;
+            margin-top: 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            max-width: 1600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .filter-group {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .filter-btn {
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-family: inherit;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .filter-btn:hover { border-color: var(--text-muted); color: var(--text); }
+        .filter-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+        .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+        .dot.watched { background: var(--watched); }
+        .dot.recommended { background: var(--recommended); }
+        .dot.planned { background: var(--planned); }
+
+        .filter-divider { width: 1px; height: 24px; background: var(--border); }
+        .results-count { color: var(--text-muted); font-size: 0.78rem; font-weight: 500; white-space: nowrap; }
+
+        .sort-wrapper select {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 7px 12px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-family: inherit;
+            outline: none;
+        }
+
+        .search-wrapper { margin-left: auto; }
+        .search-wrapper input {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 7px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-family: inherit;
+            width: 220px;
+            outline: none;
+        }
+
+        main {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 24px 40px 60px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+        }
+        th, td {
+            text-align: left;
+            padding: 10px 8px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: top;
+        }
+        th {
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            font-size: 0.7rem;
+        }
+        td a { color: #9ca3af; text-decoration: none; }
+        td a:hover { color: #fbbf24; }
+        .table-link {
+            background: none;
+            border: none;
+            color: var(--text);
+            font-family: inherit;
+            font-size: 0.82rem;
+            cursor: pointer;
+            text-align: left;
+            padding: 0;
+        }
+        .table-link:hover { color: #fbbf24; }
+
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            color: var(--text-muted);
+        }
+
+        /* Modal */
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.65);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            padding: 24px;
+        }
+        .modal {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            max-width: 900px;
+            width: 100%;
+            position: relative;
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 24px;
+            overflow: hidden;
+        }
+        .modal img { width: 100%; height: auto; display: block; }
+        .modal-content { padding: 24px 24px 28px 0; }
+        .modal-title { font-size: 1.4rem; font-weight: 700; margin-bottom: 6px; }
+        .modal-subtitle { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px; }
+        .modal-meta {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px 18px;
+            font-size: 0.85rem;
+            color: #c4c4d1;
+        }
+        .modal-meta span {
+            color: var(--text-muted);
+            display: block;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+        }
+        .modal-plot { margin-top: 16px; font-size: 0.9rem; line-height: 1.5; color: #e5e5f0; }
+        .modal-links { margin-top: 16px; display: flex; gap: 10px; flex-wrap: wrap; }
+        .modal-links a {
+            font-size: 0.8rem;
+            color: #fff;
+            background: var(--accent);
+            padding: 6px 12px;
+            border-radius: 6px;
+            text-decoration: none;
+        }
+        .modal-actions {
+            margin-top: 12px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .modal-actions button {
+            font-size: 0.8rem;
+            color: #fff;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .modal-actions button.primary { background: var(--accent); border-color: var(--accent); }
+        .edit-form {
+            margin-top: 14px;
+            display: none;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px 14px;
+        }
+        .edit-form label {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            display: block;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .edit-form input, .edit-form textarea {
+            width: 100%;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 6px;
+            padding: 8px;
+            font-family: inherit;
+            font-size: 0.82rem;
+        }
+        .edit-form textarea { min-height: 90px; grid-column: 1 / -1; }
+        .modal-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: transparent;
+            border: none;
+            color: #fff;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        @media (max-width: 900px) { .modal { grid-template-columns: 1fr; } }
+        @media (max-width: 700px) {
+            .site-header, main, .filter-bar { padding-left: 16px; padding-right: 16px; }
+            .search-wrapper input { width: 150px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="site-header">
+        <div>
+            <h1>🎬 Bhargav's Cinemascope</h1>
+            <p class="tagline" id="stats">Loading&hellip;</p>
+        </div>
+        <a class="cta-button" href="index.html">Mosaic View →</a>
+    </header>
+
+    <nav class="filter-bar">
+        <div class="filter-group" id="status-filters">
+            <button class="filter-btn active" data-status="all">All</button>
+            <button class="filter-btn" data-status="Watched"><span class="dot watched"></span> Watched</button>
+            <button class="filter-btn" data-status="Recommended"><span class="dot recommended"></span> Picks</button>
+            <button class="filter-btn" data-status="Plan to Watch"><span class="dot planned"></span> Watchlist</button>
+            <button class="filter-btn" data-status="Tagged">🏷️ Tagged</button>
+        </div>
+        <div class="filter-divider"></div>
+        <div class="filter-group" id="type-filters">
+            <button class="filter-btn active" data-type="all">All</button>
+            <button class="filter-btn" data-type="Movie">🎬 Movies</button>
+            <button class="filter-btn" data-type="Series">📺 Series</button>
+        </div>
+        <div class="filter-divider"></div>
+        <div class="sort-wrapper">
+            <select id="sort">
+                <option value="imdb_rating">Sort: IMDb Rating</option>
+                <option value="title">Sort: Title</option>
+                <option value="metascore">Sort: Metascore</option>
+                <option value="rotten_tomatoes">Sort: Rotten Tomatoes</option>
+                <option value="status">Sort: Status</option>
+            </select>
+        </div>
+        <span class="results-count" id="count"></span>
+        <div class="search-wrapper">
+            <input type="search" id="search" placeholder="Search titles…">
+        </div>
+    </nav>
+
+    <main>
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Title</th>
+                    <th>Type</th>
+                    <th>IMDb</th>
+                    <th>Metascore</th>
+                    <th>Rotten Tomatoes</th>
+                    <th>Status</th>
+                    <th>IMDb Link</th>
+                </tr>
+            </thead>
+            <tbody id="table-body"></tbody>
+        </table>
+        <div class="empty-state" id="empty" style="display:none">
+            <h2>No titles match your filters</h2>
+            <p>Try adjusting your filters or search query.</p>
+        </div>
+    </main>
+
+    <div class="modal-backdrop" id="modal-backdrop">
+        <div class="modal" role="dialog" aria-modal="true">
+            <button class="modal-close" id="modal-close" aria-label="Close">✕</button>
+            <img id="modal-poster" alt="" />
+            <div class="modal-content">
+                <div class="modal-title" id="modal-title"></div>
+                <div class="modal-subtitle" id="modal-subtitle"></div>
+                <div class="modal-meta" id="modal-meta"></div>
+                <div class="modal-plot" id="modal-plot"></div>
+                <div class="modal-links" id="modal-links"></div>
+                <div class="modal-actions">
+                    <button id="admin-refresh" class="primary">Auto-Fix (Local)</button>
+                    <button id="edit-toggle">Edit metadata</button>
+                    <button class="primary" id="download-overrides">Download overrides</button>
+                </div>
+                <div class="edit-form" id="edit-form">
+                    <div>
+                        <label>IMDb ID</label>
+                        <input id="edit-imdb-id" type="text" />
+                    </div>
+                    <div>
+                        <label>IMDb Rating</label>
+                        <input id="edit-imdb-rating" type="text" />
+                    </div>
+                    <div>
+                        <label>Metascore</label>
+                        <input id="edit-metascore" type="text" />
+                    </div>
+                    <div>
+                        <label>Rotten Tomatoes</label>
+                        <input id="edit-rotten" type="text" />
+                    </div>
+                    <div>
+                        <label>Runtime</label>
+                        <input id="edit-runtime" type="text" />
+                    </div>
+                    <div>
+                        <label>Streaming Name</label>
+                        <input id="edit-streaming-name" type="text" />
+                    </div>
+                    <div>
+                        <label>Streaming URL</label>
+                        <input id="edit-streaming-url" type="text" />
+                    </div>
+                    <div>
+                        <label>Wikipedia</label>
+                        <input id="edit-wikipedia" type="text" />
+                    </div>
+                    <textarea id="edit-plot" placeholder="Plot"></textarea>
+                    <button class="primary" id="save-edit">Save changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    (function () {
+        'use strict';
+
+        let allItems = [];
+        let activeStatus = 'all';
+        let activeType = 'all';
+        let searchQuery = '';
+        let activeSort = 'imdb_rating';
+        let currentItem = null;
+        var isLocalHost = ['localhost', '127.0.0.1', '0.0.0.0'].indexOf(window.location.hostname) !== -1;
+
+        function getOverrides() {
+            try {
+                return JSON.parse(localStorage.getItem('metadata_overrides_v1') || '{}');
+            } catch (e) {
+                return {};
+            }
+        }
+
+        function applyLocalOverrides(items) {
+            var overrides = getOverrides();
+            return items.map(function (item) {
+                var o = overrides[item.title];
+                return o ? Object.assign({}, item, o) : item;
+            });
+        }
+
+        fetch('assets/manifest.json')
+            .then(r => {
+                if (!r.ok) throw new Error('not found');
+                return r.json();
+            })
+            .then(data => {
+                allItems = applyLocalOverrides(data);
+                renderStats();
+                renderTable(applySort(filterItems()));
+                bindEvents();
+            })
+            .catch(() => {
+                document.getElementById('table-body').innerHTML = '';
+            });
+
+        function filterItems() {
+            return allItems.filter(function (item) {
+                if (activeStatus === 'Tagged' && (!item.tags || item.tags.length === 0)) return false;
+                if (activeStatus !== 'all' && activeStatus !== 'Tagged' && item.status !== activeStatus) return false;
+                if (activeType !== 'all' && item.type !== activeType) return false;
+                if (searchQuery && item.title.toLowerCase().indexOf(searchQuery) === -1) return false;
+                return true;
+            });
+        }
+
+        function applySort(items) {
+            var list = items.slice();
+            var toNumber = function (val) {
+                if (!val) return -1;
+                if (typeof val === 'number') return val;
+                if (val.indexOf('%') !== -1) return parseFloat(val.replace('%', ''));
+                return parseFloat(val) || -1;
+            };
+            if (activeSort === 'title') {
+                list.sort(function (a, b) { return a.title.localeCompare(b.title); });
+            } else if (activeSort === 'imdb_rating') {
+                list.sort(function (a, b) { return toNumber(b.imdb_rating) - toNumber(a.imdb_rating); });
+            } else if (activeSort === 'metascore') {
+                list.sort(function (a, b) { return toNumber(b.metascore) - toNumber(a.metascore); });
+            } else if (activeSort === 'rotten_tomatoes') {
+                list.sort(function (a, b) { return toNumber(b.rotten_tomatoes) - toNumber(a.rotten_tomatoes); });
+            } else if (activeSort === 'status') {
+                list.sort(function (a, b) { return a.status.localeCompare(b.status); });
+            }
+            return list;
+        }
+
+        function renderStats() {
+            var t = allItems.length;
+            var w = allItems.filter(function(i){ return i.status === 'Watched'; }).length;
+            var r = allItems.filter(function(i){ return i.status === 'Recommended'; }).length;
+            var p = allItems.filter(function(i){ return i.status === 'Plan to Watch'; }).length;
+            document.getElementById('stats').textContent =
+                t + ' titles · ' + w + ' watched · ' + r + ' recommended · ' + p + ' planned';
+        }
+
+        function renderTable(items) {
+            var body = document.getElementById('table-body');
+            var empty = document.getElementById('empty');
+            body.innerHTML = '';
+            document.getElementById('count').textContent = items.length + ' shown';
+
+            if (!items.length) {
+                empty.style.display = 'block';
+                return;
+            }
+            empty.style.display = 'none';
+
+            items.forEach(function (item, idx) {
+                var tr = document.createElement('tr');
+                var imdbLink = item.imdb_id
+                    ? '<a href="https://www.imdb.com/title/' + item.imdb_id + '" target="_blank" rel="noopener">Link</a>'
+                    : '—';
+                tr.innerHTML =
+                    '<td>' + (idx + 1) + '</td>' +
+                    '<td><button class="table-link" data-title="' + item.title.replace(/"/g, '&quot;') + '">' + item.title + '</button></td>' +
+                    '<td>' + item.type + '</td>' +
+                    '<td>' + (item.imdb_rating || '—') + '</td>' +
+                    '<td>' + (item.metascore || '—') + '</td>' +
+                    '<td>' + (item.rotten_tomatoes || '—') + '</td>' +
+                    '<td>' + item.status + '</td>' +
+                    '<td>' + imdbLink + '</td>';
+                body.appendChild(tr);
+            });
+
+            body.querySelectorAll('.table-link').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var title = btn.getAttribute('data-title');
+                    var found = allItems.find(function (it) { return it.title === title; });
+                    if (found) openModal(found);
+                });
+            });
+        }
+
+        function openModal(item) {
+            currentItem = item;
+            var backdrop = document.getElementById('modal-backdrop');
+            document.getElementById('modal-poster').src = 'assets/posters/' + item.src;
+            document.getElementById('modal-poster').alt = item.title;
+            document.getElementById('modal-title').textContent = item.title;
+            var subtitle = [item.year, item.type, item.language].filter(Boolean).join(' · ');
+            document.getElementById('modal-subtitle').textContent = subtitle;
+            document.getElementById('modal-plot').textContent = item.plot || 'Plot unavailable.';
+            document.getElementById('edit-imdb-id').value = item.imdb_id || '';
+            document.getElementById('edit-imdb-rating').value = item.imdb_rating || '';
+            document.getElementById('edit-metascore').value = item.metascore || '';
+            document.getElementById('edit-rotten').value = item.rotten_tomatoes || '';
+            document.getElementById('edit-runtime').value = item.runtime || '';
+            document.getElementById('edit-streaming-name').value = item.streaming_name || '';
+            document.getElementById('edit-streaming-url').value = item.streaming_url || '';
+            document.getElementById('edit-wikipedia').value = item.wikipedia || '';
+            document.getElementById('edit-plot').value = item.plot || '';
+
+            var meta = '';
+            meta += '<div><span>Status</span>' + item.status + '</div>';
+            meta += '<div><span>Runtime</span>' + (item.runtime || '—') + '</div>';
+            meta += '<div><span>IMDb</span>' + (item.imdb_rating || '—') + '</div>';
+            meta += '<div><span>Metascore</span>' + (item.metascore || '—') + '</div>';
+            meta += '<div><span>Rotten Tomatoes</span>' + (item.rotten_tomatoes || '—') + '</div>';
+            meta += '<div><span>Genres</span>' + (item.genres && item.genres.length ? item.genres.join(', ') : '—') + '</div>';
+            meta += '<div><span>Tags</span>' + (item.tags && item.tags.length ? item.tags.join(', ') : '—') + '</div>';
+            meta += '<div><span>Streaming</span>' + (item.streaming_name || '—') + '</div>';
+            document.getElementById('modal-meta').innerHTML = meta;
+
+            var links = '';
+            if (item.imdb_id) {
+                links += '<a href="https://www.imdb.com/title/' + item.imdb_id + '" target="_blank" rel="noopener">IMDb</a>';
+            }
+            if (item.streaming_url) {
+                links += '<a href="' + item.streaming_url + '" target="_blank" rel="noopener">' + (item.streaming_name || 'Watch') + '</a>';
+            }
+            if (item.wikipedia) {
+                links += '<a href="' + item.wikipedia + '" target="_blank" rel="noopener">Wikipedia</a>';
+            }
+            document.getElementById('modal-links').innerHTML = links;
+
+            backdrop.style.display = 'flex';
+            document.getElementById('admin-refresh').style.display = isLocalHost ? 'inline-flex' : 'none';
+        }
+
+        function refreshMetadata(item) {
+            if (!isLocalHost) return;
+            fetch('/api/refresh_metadata/' + item.id, { method: 'POST' })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (!data || !data.item) return;
+                    var overrides = getOverrides();
+                    overrides[item.title] = Object.assign({}, overrides[item.title] || {}, {
+                        imdb_id: data.item.imdb_id || data.item.imdbID || item.imdb_id,
+                        imdb_rating: data.item.imdb_rating || item.imdb_rating,
+                        metascore: data.item.metascore || item.metascore,
+                        rotten_tomatoes: data.item.rotten_tomatoes || item.rotten_tomatoes,
+                        runtime: data.item.runtime || item.runtime,
+                        wikipedia: data.item.wikipedia || item.wikipedia,
+                        plot: data.item.plot || item.plot,
+                    });
+                    localStorage.setItem('metadata_overrides_v1', JSON.stringify(overrides));
+                    allItems = applyLocalOverrides(allItems);
+                    renderTable(applySort(filterItems()));
+                    openModal(allItems.find(function (it) { return it.title === item.title; }) || item);
+                });
+        }
+
+        function bindEvents() {
+            document.querySelectorAll('[data-status]').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    document.querySelectorAll('[data-status]').forEach(function (b) { b.classList.remove('active'); });
+                    btn.classList.add('active');
+                    activeStatus = btn.dataset.status;
+                    renderTable(applySort(filterItems()));
+                });
+            });
+            document.querySelectorAll('[data-type]').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    document.querySelectorAll('[data-type]').forEach(function (b) { b.classList.remove('active'); });
+                    btn.classList.add('active');
+                    activeType = btn.dataset.type;
+                    renderTable(applySort(filterItems()));
+                });
+            });
+            document.getElementById('sort').addEventListener('change', function (e) {
+                activeSort = e.target.value;
+                renderTable(applySort(filterItems()));
+            });
+            var debounce;
+            document.getElementById('search').addEventListener('input', function (e) {
+                clearTimeout(debounce);
+                debounce = setTimeout(function () {
+                    searchQuery = e.target.value.toLowerCase().trim();
+                    renderTable(applySort(filterItems()));
+                }, 180);
+            });
+
+            var backdrop = document.getElementById('modal-backdrop');
+            document.getElementById('modal-close').addEventListener('click', function () {
+                backdrop.style.display = 'none';
+            });
+            backdrop.addEventListener('click', function (e) {
+                if (e.target === backdrop) backdrop.style.display = 'none';
+            });
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') backdrop.style.display = 'none';
+            });
+
+            document.getElementById('edit-toggle').addEventListener('click', function () {
+                var form = document.getElementById('edit-form');
+                form.style.display = form.style.display === 'grid' ? 'none' : 'grid';
+            });
+
+            document.getElementById('admin-refresh').addEventListener('click', function () {
+                if (currentItem) refreshMetadata(currentItem);
+            });
+
+            document.getElementById('save-edit').addEventListener('click', function () {
+                if (!currentItem) return;
+                var overrides = getOverrides();
+                overrides[currentItem.title] = {
+                    imdb_id: document.getElementById('edit-imdb-id').value.trim(),
+                    imdb_rating: document.getElementById('edit-imdb-rating').value.trim(),
+                    metascore: document.getElementById('edit-metascore').value.trim(),
+                    rotten_tomatoes: document.getElementById('edit-rotten').value.trim(),
+                    runtime: document.getElementById('edit-runtime').value.trim(),
+                    streaming_name: document.getElementById('edit-streaming-name').value.trim(),
+                    streaming_url: document.getElementById('edit-streaming-url').value.trim(),
+                    wikipedia: document.getElementById('edit-wikipedia').value.trim(),
+                    plot: document.getElementById('edit-plot').value.trim(),
+                };
+                localStorage.setItem('metadata_overrides_v1', JSON.stringify(overrides));
+                allItems = applyLocalOverrides(allItems);
+                renderTable(applySort(filterItems()));
+                openModal(allItems.find(function (it) { return it.title === currentItem.title; }) || currentItem);
+            });
+
+            document.getElementById('download-overrides').addEventListener('click', function () {
+                var overrides = getOverrides();
+                var blob = new Blob([JSON.stringify(overrides, null, 2)], { type: 'application/json' });
+                var url = URL.createObjectURL(blob);
+                var a = document.createElement('a');
+                a.href = url;
+                a.download = 'overrides.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            });
+        }
+    })();
+    </script>
+</body>
+</html>

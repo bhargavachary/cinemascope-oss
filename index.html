@@ -3,153 +3,893 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Entertainment Tracker</title>
-    <link rel="stylesheet" href="css/styles.css">
+    <title>🎬 Bhargav's Cinemascope</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ═══════════════════════════════════════════════
+           DESIGN SYSTEM — "Personal Museum" Dark Theme
+           ═══════════════════════════════════════════════ */
+        :root {
+            --bg:           #0a0a0f;
+            --bg-surface:   #13131a;
+            --bg-elevated:  #1a1a24;
+            --border:       #2a2a35;
+            --text:         #eeeef0;
+            --text-muted:   #7a7a8e;
+            --accent:       #6366f1;
+            --watched:      #22c55e;
+            --recommended:  #f59e0b;
+            --planned:      #3b82f6;
+            --gap:          10px;
+            --radius:       10px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ─── Header ─────────────────────────────────── */
+        .site-header {
+            padding: 48px 40px 0;
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+        }
+        .site-header h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .cta-button {
+            background: var(--accent);
+            color: #fff;
+            padding: 10px 16px;
+            border-radius: 999px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            text-decoration: none;
+            border: 1px solid transparent;
+        }
+        .cta-button:hover { filter: brightness(1.05); }
+        .tagline {
+            color: var(--text-muted);
+            font-size: 0.88rem;
+            margin-top: 6px;
+            font-weight: 400;
+        }
+
+        /* ─── Filter Bar ─────────────────────────────── */
+        .filter-bar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(10, 10, 15, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border);
+            padding: 14px 40px;
+            margin-top: 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            max-width: 1600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .filter-group {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .filter-btn {
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-family: inherit;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .filter-btn:hover {
+            border-color: var(--text-muted);
+            color: var(--text);
+        }
+        .filter-btn.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+        }
+        .dot {
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .dot.watched      { background: var(--watched); }
+        .dot.recommended   { background: var(--recommended); }
+        .dot.planned       { background: var(--planned); }
+
+        .search-wrapper { margin-left: auto; }
+        .search-wrapper input {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 7px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-family: inherit;
+            width: 200px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .search-wrapper input:focus { border-color: var(--accent); }
+        .search-wrapper input::placeholder { color: var(--text-muted); }
+
+        .filter-divider {
+            width: 1px;
+            height: 24px;
+            background: var(--border);
+        }
+        .results-count {
+            color: var(--text-muted);
+            font-size: 0.78rem;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .sort-wrapper select {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 7px 12px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-family: inherit;
+            outline: none;
+        }
+
+        /* ─── Masonry Grid ───────────────────────────── */
+        main {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 24px 40px 60px;
+        }
+        .masonry {
+            column-count: 5;
+            column-gap: var(--gap);
+        }
+
+        /* ─── Card ───────────────────────────────────── */
+        .card {
+            break-inside: avoid;
+            margin-bottom: var(--gap);
+            border-radius: var(--radius);
+            overflow: hidden;
+            position: relative;
+            cursor: pointer;
+            animation: fadeInUp 0.5s ease forwards;
+            opacity: 0;
+        }
+        .card:hover { z-index: 2; }
+        .card img {
+            width: 100%;
+            height: auto;
+            display: block;
+            transition: transform 0.35s ease;
+        }
+        .card:hover img { transform: scale(1.03); }
+
+        /* ─── Hover Overlay ──────────────────────────── */
+        .card-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(
+                to top,
+                rgba(0,0,0,0.92) 0%,
+                rgba(0,0,0,0.55) 35%,
+                rgba(0,0,0,0.05) 65%,
+                transparent 100%
+            );
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 14px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+        .card:hover .card-overlay { opacity: 1; }
+
+        .admin-refresh {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.6);
+            border: 1px solid rgba(255,255,255,0.15);
+            color: #fff;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            padding: 4px 8px;
+            cursor: pointer;
+            display: none;
+        }
+        .admin-refresh.visible { display: inline-flex; }
+
+        .status-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            width: fit-content;
+        }
+        .status-badge.watched      { background: var(--watched); color: #052e16; }
+        .status-badge.recommended   { background: var(--recommended); color: #451a03; }
+        .status-badge.planned       { background: var(--planned); color: #fff; }
+
+        .card-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-top: 8px;
+            line-height: 1.3;
+            color: #fff;
+        }
+        .card-meta {
+            font-size: 0.72rem;
+            color: #aaa;
+            margin-top: 3px;
+        }
+        .card-rating {
+            font-size: 0.78rem;
+            color: #fbbf24;
+            margin-top: 3px;
+            font-weight: 600;
+        }
+        .imdb-link {
+            font-size: 0.68rem;
+            color: #9ca3af;
+            text-decoration: none;
+            margin-top: 4px;
+            pointer-events: auto;
+            transition: color 0.2s;
+        }
+        .imdb-link:hover { color: #fbbf24; }
+
+        /* ─── Detail Modal ──────────────────────────── */
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.65);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            padding: 24px;
+        }
+        .modal {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            max-width: 900px;
+            width: 100%;
+            position: relative;
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 24px;
+            overflow: hidden;
+        }
+        .modal img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        .modal-content {
+            padding: 24px 24px 28px 0;
+        }
+        .modal-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+        .modal-subtitle {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+        .modal-meta {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px 18px;
+            font-size: 0.85rem;
+            color: #c4c4d1;
+        }
+        .modal-meta span {
+            color: var(--text-muted);
+            display: block;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+        }
+        .modal-plot {
+            margin-top: 16px;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            color: #e5e5f0;
+        }
+        .modal-links {
+            margin-top: 16px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .modal-links a {
+            font-size: 0.8rem;
+            color: #fff;
+            background: var(--accent);
+            padding: 6px 12px;
+            border-radius: 6px;
+            text-decoration: none;
+        }
+        .modal-actions {
+            margin-top: 12px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .modal-actions button {
+            font-size: 0.8rem;
+            color: #fff;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .modal-actions button.primary { background: var(--accent); border-color: var(--accent); }
+        .edit-form {
+            margin-top: 14px;
+            display: none;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px 14px;
+        }
+        .edit-form label {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            display: block;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .edit-form input, .edit-form textarea {
+            width: 100%;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 6px;
+            padding: 8px;
+            font-family: inherit;
+            font-size: 0.82rem;
+        }
+        .edit-form textarea { min-height: 90px; grid-column: 1 / -1; }
+        .modal-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: transparent;
+            border: none;
+            color: #fff;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        /* ─── Empty / Error States ───────────────────── */
+        .empty-state, .error-state {
+            text-align: center;
+            padding: 80px 20px;
+            color: var(--text-muted);
+        }
+        .empty-state h2, .error-state h2 { font-size: 1.2rem; font-weight: 500; }
+        .empty-state p, .error-state p   { font-size: 0.9rem; margin-top: 8px; }
+        .error-state code {
+            display: inline-block;
+            background: var(--bg-elevated);
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            margin-top: 12px;
+            color: var(--accent);
+        }
+
+        /* ─── Footer ─────────────────────────────────── */
+        footer {
+            text-align: center;
+            padding: 24px 40px 40px;
+            color: var(--text-muted);
+            font-size: 0.72rem;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        /* ─── Animations ─────────────────────────────── */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ─── Responsive ─────────────────────────────── */
+        @media (max-width: 1400px) { .masonry { column-count: 4; } }
+        @media (max-width: 1000px) { .masonry { column-count: 3; } }
+        @media (max-width: 700px) {
+            .masonry { column-count: 2; }
+            .site-header, main, .filter-bar, footer { padding-left: 16px; padding-right: 16px; }
+            .search-wrapper input { width: 140px; }
+        }
+        @media (max-width: 450px) {
+            .masonry { column-count: 2; column-gap: 8px; }
+            .card { margin-bottom: 8px; }
+        }
+    </style>
 </head>
 <body>
-    <header>
-        <div class="header-content">
-            <h1>🎬 Entertainment Tracker</h1>
-            <p class="subtitle">Movies &amp; Series I've watched or plan to watch</p>
-            <div id="mode-badge" class="mode-badge">Loading...</div>
+
+    <header class="site-header">
+        <div>
+            <h1>🎬 Bhargav's Cinemascope</h1>
+            <p class="tagline" id="stats">Loading&hellip;</p>
+        </div>
+        <div class="header-actions">
+            <a class="cta-button" href="table.html">Table View →</a>
         </div>
     </header>
 
-    <nav class="toolbar">
-        <div class="toolbar-content">
-            <div class="search-box">
-                <input type="text" id="search-input" placeholder="Search titles, tags..." aria-label="Search">
-            </div>
-            <div class="filter-group">
-                <select id="view-mode" aria-label="View mode">
-                    <option value="type-language">📂 Type & Language</option>
-                    <option value="genre">🎭 Genre Based</option>
-                </select>
-                <select id="filter-status" aria-label="Filter by status">
-                    <option value="all">All Statuses</option>
-                    <option value="Watched">✅ Watched</option>
-                    <option value="Watching">🎬 Watching</option>
-                    <option value="Plan to Watch">📝 Plan to Watch</option>
-                    <option value="Recommended">🌟 Recommended</option>
-                </select>
-                <select id="filter-type" aria-label="Filter by type">
-                    <option value="all">All Types</option>
-                    <option value="Movie">🎥 Movie</option>
-                    <option value="Series">📺 Series</option>
-                </select>
-                <select id="sort-by" aria-label="Sort by">
-                    <option value="title">Title A-Z</option>
-                    <option value="rating-desc">Rating ↓</option>
-                    <option value="rating-asc">Rating ↑</option>
-                    <option value="id-desc">Newest</option>
-                    <option value="id-asc">Oldest</option>
-                </select>
-            </div>
-            <button id="add-item-btn" class="btn btn-primary" style="display:none;">+ Add Item</button>
+    <nav class="filter-bar">
+        <div class="filter-group" id="status-filters">
+            <button class="filter-btn active" data-status="all">All</button>
+            <button class="filter-btn" data-status="Watched"><span class="dot watched"></span> Watched</button>
+            <button class="filter-btn" data-status="Recommended"><span class="dot recommended"></span> Picks</button>
+            <button class="filter-btn" data-status="Plan to Watch"><span class="dot planned"></span> Watchlist</button>
+            <button class="filter-btn" data-status="Tagged">🏷️ Tagged</button>
+        </div>
+        <div class="filter-divider"></div>
+        <div class="filter-group" id="type-filters">
+            <button class="filter-btn active" data-type="all">All</button>
+            <button class="filter-btn" data-type="Movie">🎬 Movies</button>
+            <button class="filter-btn" data-type="Series">📺 Series</button>
+        </div>
+        <div class="filter-divider"></div>
+        <div class="sort-wrapper">
+            <select id="sort">
+                <option value="imdb_rating">Sort: IMDb Rating</option>
+                <option value="title">Sort: Title</option>
+                <option value="metascore">Sort: Metascore</option>
+                <option value="rotten_tomatoes">Sort: Rotten Tomatoes</option>
+                <option value="status">Sort: Status</option>
+            </select>
+        </div>
+        <span class="results-count" id="count"></span>
+        <div class="search-wrapper">
+            <input type="search" id="search" placeholder="Search titles…">
         </div>
     </nav>
 
     <main>
-        <section id="stats-section" class="stats-section">
-            <div class="stats-grid" id="stats-grid"></div>
-        </section>
-
-        <section id="library-section">
-            <div class="library-grid" id="library-grid">
-                <p class="loading">Loading library...</p>
-            </div>
-        </section>
+        <div class="masonry" id="grid"></div>
+        <div class="empty-state" id="empty" style="display:none">
+            <h2>No titles match your filters</h2>
+            <p>Try adjusting your filters or search query.</p>
+        </div>
     </main>
 
-    <!-- Add/Edit Modal -->
-    <div id="item-modal" class="modal" style="display:none;">
-        <div class="modal-overlay"></div>
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 id="modal-title">Add Item</h2>
-                <button class="modal-close" id="modal-close">&times;</button>
-            </div>
-            <form id="item-form">
-                <div class="form-group">
-                    <label for="form-title">Title *</label>
-                    <input type="text" id="form-title" required>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="form-type">Type *</label>
-                        <select id="form-type" required>
-                            <option value="Movie">Movie</option>
-                            <option value="Series">Series</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="form-status">Status *</label>
-                        <select id="form-status" required>
-                            <option value="Plan to Watch">Plan to Watch</option>
-                            <option value="Watching">Watching</option>
-                            <option value="Watched">Watched</option>
-                            <option value="Recommended">Recommended</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="form-language">Language</label>
-                        <select id="form-language">
-                            <option value="English">English</option>
-                            <option value="Hindi">Hindi</option>
-                            <option value="Tamil">Tamil</option>
-                            <option value="Malayalam">Malayalam</option>
-                            <option value="Telugu">Telugu</option>
-                            <option value="Kannada">Kannada</option>
-                            <option value="Japanese">Japanese</option>
-                            <option value="Korean">Korean</option>
-                            <option value="Other">Other</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="form-rating">Rating (0-10)</label>
-                        <input type="number" id="form-rating" min="0" max="10" step="0.1" value="0">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="form-genres">Genres (comma-separated, max 3)</label>
-                    <input type="text" id="form-genres" placeholder="Action, Thriller, Sci-Fi">
-                </div>
-                <div class="form-group">
-                    <label for="form-imdb-id">IMDb ID (optional)</label>
-                    <input type="text" id="form-imdb-id" placeholder="tt1234567">
-                </div>
-                <div class="form-group">
-                    <label for="form-tags">Tags (comma-separated)</label>
-                    <input type="text" id="form-tags" placeholder="Classic, Award-winning">
-                </div>
-                <div class="form-actions">
-                    <button type="button" class="btn btn-secondary" id="form-cancel">Cancel</button>
-                    <button type="submit" class="btn btn-primary" id="form-submit">Save</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Recommendations Modal -->
-    <div id="rec-modal" class="modal" style="display:none;">
-        <div class="modal-overlay"></div>
-        <div class="modal-content modal-wide">
-            <div class="modal-header">
-                <h2 id="rec-modal-title">Recommendations</h2>
-                <button class="modal-close" id="rec-modal-close">&times;</button>
-            </div>
-            <div id="rec-content">
-                <p class="loading">Fetching recommendations...</p>
-            </div>
-        </div>
-    </div>
-
     <footer>
-        <p>Entertainment Tracker &mdash; Data stored in <code>data/library.json</code></p>
+        <p id="footer-info"></p>
     </footer>
 
-    <script src="js/app.js"></script>
+    <div class="modal-backdrop" id="modal-backdrop">
+        <div class="modal" role="dialog" aria-modal="true">
+            <button class="modal-close" id="modal-close" aria-label="Close">✕</button>
+            <img id="modal-poster" alt="" />
+            <div class="modal-content">
+                <div class="modal-title" id="modal-title"></div>
+                <div class="modal-subtitle" id="modal-subtitle"></div>
+                <div class="modal-meta" id="modal-meta"></div>
+                <div class="modal-plot" id="modal-plot"></div>
+                <div class="modal-links" id="modal-links"></div>
+                <div class="modal-actions">
+                    <button id="admin-refresh" class="primary">Auto-Fix (Local)</button>
+                    <button id="edit-toggle">Edit metadata</button>
+                    <button class="primary" id="download-overrides">Download overrides</button>
+                </div>
+                <div class="edit-form" id="edit-form">
+                    <div>
+                        <label>IMDb ID</label>
+                        <input id="edit-imdb-id" type="text" />
+                    </div>
+                    <div>
+                        <label>IMDb Rating</label>
+                        <input id="edit-imdb-rating" type="text" />
+                    </div>
+                    <div>
+                        <label>Metascore</label>
+                        <input id="edit-metascore" type="text" />
+                    </div>
+                    <div>
+                        <label>Rotten Tomatoes</label>
+                        <input id="edit-rotten" type="text" />
+                    </div>
+                    <div>
+                        <label>Runtime</label>
+                        <input id="edit-runtime" type="text" />
+                    </div>
+                    <div>
+                        <label>Streaming Name</label>
+                        <input id="edit-streaming-name" type="text" />
+                    </div>
+                    <div>
+                        <label>Streaming URL</label>
+                        <input id="edit-streaming-url" type="text" />
+                    </div>
+                    <div>
+                        <label>Wikipedia</label>
+                        <input id="edit-wikipedia" type="text" />
+                    </div>
+                    <textarea id="edit-plot" placeholder="Plot"></textarea>
+                    <button class="primary" id="save-edit">Save changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    (function () {
+        'use strict';
+
+        let allItems = [];
+        let activeStatus = 'all';
+        let activeType = 'all';
+        let searchQuery = '';
+        let activeSort = 'imdb_rating';
+        let currentItem = null;
+        var isLocalHost = ['localhost', '127.0.0.1', '0.0.0.0'].indexOf(window.location.hostname) !== -1;
+
+        /* ─── Bootstrap ──────────────────────────── */
+        fetch('assets/manifest.json')
+            .then(r => {
+                if (!r.ok) throw new Error('not found');
+                return r.json();
+            })
+            .then(data => {
+                allItems = applyLocalOverrides(data);
+                renderStats();
+                renderGrid();
+                renderFooter();
+                bindEvents();
+            })
+            .catch(() => {
+                document.getElementById('grid').innerHTML =
+                    '<div class="error-state">' +
+                    '<h2>\u26A0\uFE0F No data found</h2>' +
+                    '<p>Run the build pipeline first:</p>' +
+                    '<code>python3 scripts/fetch_assets.py</code>' +
+                    '</div>';
+            });
+
+        /* ─── Filter Logic ───────────────────────── */
+        function filterItems() {
+            return allItems.filter(function (item) {
+                if (activeStatus === 'Tagged' && (!item.tags || item.tags.length === 0)) return false;
+                if (activeStatus !== 'all' && activeStatus !== 'Tagged' && item.status !== activeStatus) return false;
+                if (activeType !== 'all' && item.type !== activeType) return false;
+                if (searchQuery && item.title.toLowerCase().indexOf(searchQuery) === -1) return false;
+                return true;
+            });
+        }
+
+        /* ─── Render Grid ────────────────────────── */
+        function renderGrid() {
+            var grid = document.getElementById('grid');
+            var empty = document.getElementById('empty');
+            var filtered = applySort(filterItems());
+
+            document.getElementById('count').textContent = filtered.length + ' shown';
+
+            if (filtered.length === 0) {
+                grid.style.display = 'none';
+                empty.style.display = 'block';
+                return;
+            }
+            grid.style.display = '';
+            empty.style.display = 'none';
+            grid.innerHTML = '';
+
+            filtered.forEach(function (item, i) {
+                var card = document.createElement('div');
+                card.className = 'card';
+                card.style.animationDelay = Math.min(i * 25, 600) + 'ms';
+
+                var sc = item.status === 'Watched' ? 'watched'
+                       : item.status === 'Recommended' ? 'recommended'
+                       : 'planned';
+
+                var meta = [item.language, item.type].filter(Boolean).join(' \u00B7 ');
+                var yearStr = item.year ? ' (' + item.year + ')' : '';
+                var ratingHTML = item.imdb_rating
+                    ? '<div class="card-rating">\u2B50 ' + item.imdb_rating + '</div>' : '';
+                var imdbHTML = item.imdb_id
+                    ? '<a class="imdb-link" href="https://www.imdb.com/title/' + item.imdb_id + '" target="_blank" rel="noopener">IMDb \u2197</a>' : '';
+
+                card.innerHTML =
+                    '<img src="assets/posters/' + item.src + '"' +
+                    ' alt="' + item.title + '"' +
+                    ' width="' + item.width + '"' +
+                    ' height="' + item.height + '"' +
+                    ' loading="lazy">' +
+                    // (isLocalHost ? '<button class="admin-refresh" data-id="' + item.id + '">Auto-Fix</button>' : '') +
+                    '<div class="card-overlay">' +
+                    '<span class="status-badge ' + sc + '">' + item.status + '</span>' +
+                    '<div class="card-title">' + item.title + yearStr + '</div>' +
+                    '<div class="card-meta">' + meta + '</div>' +
+                    ratingHTML + imdbHTML +
+                    '</div>';
+
+                card.addEventListener('click', function () { openModal(item); });
+                /*
+                if (isLocalHost) {
+                    var btn = card.querySelector('.admin-refresh');
+                    if (btn) {
+                        btn.classList.add('visible');
+                        btn.addEventListener('click', function (e) {
+                            e.stopPropagation();
+                            refreshMetadata(item, btn);
+                        });
+                    }
+                }
+                */
+                grid.appendChild(card);
+            });
+        }
+
+        /* ─── Stats ──────────────────────────────── */
+        function renderStats() {
+            var t = allItems.length;
+            var w = allItems.filter(function(i){ return i.status === 'Watched'; }).length;
+            var r = allItems.filter(function(i){ return i.status === 'Recommended'; }).length;
+            var p = allItems.filter(function(i){ return i.status === 'Plan to Watch'; }).length;
+            document.getElementById('stats').textContent =
+                t + ' titles \u00B7 ' + w + ' watched \u00B7 ' + r + ' recommended \u00B7 ' + p + ' planned';
+        }
+
+        function renderFooter() {
+            var api = allItems.filter(function(i){ return i.poster_source === 'omdb'; }).length;
+            var ph  = allItems.filter(function(i){ return i.poster_source === 'placeholder'; }).length;
+            var ca  = allItems.filter(function(i){ return i.poster_source === 'cached'; }).length;
+            var parts = [];
+            if (api) parts.push(api + ' real posters');
+            if (ca)  parts.push(ca + ' cached');
+            if (ph)  parts.push(ph + ' placeholders');
+            document.getElementById('footer-info').textContent =
+                parts.join(' \u00B7 ') + ' \u00B7 Built with fetch_assets.py';
+        }
+
+        function getOverrides() {
+            try {
+                return JSON.parse(localStorage.getItem('metadata_overrides_v1') || '{}');
+            } catch (e) {
+                return {};
+            }
+        }
+
+        function applyLocalOverrides(items) {
+            var overrides = getOverrides();
+            return items.map(function (item) {
+                var o = overrides[item.title];
+                return o ? Object.assign({}, item, o) : item;
+            });
+        }
+
+        function applySort(items) {
+            var list = items.slice();
+            var toNumber = function (val) {
+                if (!val) return -1;
+                if (typeof val === 'number') return val;
+                if (val.indexOf('%') !== -1) return parseFloat(val.replace('%', ''));
+                return parseFloat(val) || -1;
+            };
+            if (activeSort === 'title') {
+                list.sort(function (a, b) { return a.title.localeCompare(b.title); });
+            } else if (activeSort === 'imdb_rating') {
+                list.sort(function (a, b) { return toNumber(b.imdb_rating) - toNumber(a.imdb_rating); });
+            } else if (activeSort === 'metascore') {
+                list.sort(function (a, b) { return toNumber(b.metascore) - toNumber(a.metascore); });
+            } else if (activeSort === 'rotten_tomatoes') {
+                list.sort(function (a, b) { return toNumber(b.rotten_tomatoes) - toNumber(a.rotten_tomatoes); });
+            } else if (activeSort === 'status') {
+                list.sort(function (a, b) { return a.status.localeCompare(b.status); });
+            }
+            return list;
+        }
+
+        function openModal(item) {
+            currentItem = item;
+            var backdrop = document.getElementById('modal-backdrop');
+            document.getElementById('modal-poster').src = 'assets/posters/' + item.src;
+            document.getElementById('modal-poster').alt = item.title;
+            document.getElementById('modal-title').textContent = item.title;
+            var subtitle = [item.year, item.type, item.language].filter(Boolean).join(' · ');
+            document.getElementById('modal-subtitle').textContent = subtitle;
+            document.getElementById('modal-plot').textContent = item.plot || 'Plot unavailable.';
+            document.getElementById('edit-imdb-id').value = item.imdb_id || '';
+            document.getElementById('edit-imdb-rating').value = item.imdb_rating || '';
+            document.getElementById('edit-metascore').value = item.metascore || '';
+            document.getElementById('edit-rotten').value = item.rotten_tomatoes || '';
+            document.getElementById('edit-runtime').value = item.runtime || '';
+            document.getElementById('edit-streaming-name').value = item.streaming_name || '';
+            document.getElementById('edit-streaming-url').value = item.streaming_url || '';
+            document.getElementById('edit-wikipedia').value = item.wikipedia || '';
+            document.getElementById('edit-plot').value = item.plot || '';
+
+            var meta = '';
+            meta += '<div><span>Status</span>' + item.status + '</div>';
+            meta += '<div><span>Runtime</span>' + (item.runtime || '—') + '</div>';
+            meta += '<div><span>IMDb</span>' + (item.imdb_rating || '—') + '</div>';
+            meta += '<div><span>Metascore</span>' + (item.metascore || '—') + '</div>';
+            meta += '<div><span>Rotten Tomatoes</span>' + (item.rotten_tomatoes || '—') + '</div>';
+            meta += '<div><span>Genres</span>' + (item.genres && item.genres.length ? item.genres.join(', ') : '—') + '</div>';
+            meta += '<div><span>Tags</span>' + (item.tags && item.tags.length ? item.tags.join(', ') : '—') + '</div>';
+            meta += '<div><span>Streaming</span>' + (item.streaming_name || '—') + '</div>';
+            document.getElementById('modal-meta').innerHTML = meta;
+
+            var links = '';
+            if (item.imdb_id) {
+                links += '<a href="https://www.imdb.com/title/' + item.imdb_id + '" target="_blank" rel="noopener">IMDb</a>';
+            }
+            if (item.streaming_url) {
+                links += '<a href="' + item.streaming_url + '" target="_blank" rel="noopener">' + (item.streaming_name || 'Watch') + '</a>';
+            }
+            if (item.wikipedia) {
+                links += '<a href="' + item.wikipedia + '" target="_blank" rel="noopener">Wikipedia</a>';
+            }
+            document.getElementById('modal-links').innerHTML = links;
+
+            backdrop.style.display = 'flex';
+            document.getElementById('admin-refresh').style.display = isLocalHost ? 'inline-flex' : 'none';
+        }
+
+        function refreshMetadata(item, btn) {
+            if (!isLocalHost) return;
+            if (btn) btn.textContent = 'Updating…';
+            fetch('/api/refresh_metadata/' + item.id, { method: 'POST' })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (!data || !data.item) return;
+                    var overrides = getOverrides();
+                    overrides[item.title] = Object.assign({}, overrides[item.title] || {}, {
+                        imdb_id: data.item.imdb_id || data.item.imdbID || item.imdb_id,
+                        imdb_rating: data.item.imdb_rating || item.imdb_rating,
+                        metascore: data.item.metascore || item.metascore,
+                        rotten_tomatoes: data.item.rotten_tomatoes || item.rotten_tomatoes,
+                        runtime: data.item.runtime || item.runtime,
+                        wikipedia: data.item.wikipedia || item.wikipedia,
+                        plot: data.item.plot || item.plot,
+                    });
+                    localStorage.setItem('metadata_overrides_v1', JSON.stringify(overrides));
+                    allItems = applyLocalOverrides(allItems);
+                    renderGrid();
+                })
+                .finally(function () {
+                    if (btn) btn.textContent = 'Auto-Fix';
+                });
+        }
+
+        /* ─── Event Binding ──────────────────────── */
+        function bindEvents() {
+            document.querySelectorAll('[data-status]').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    document.querySelectorAll('[data-status]').forEach(function (b) { b.classList.remove('active'); });
+                    btn.classList.add('active');
+                    activeStatus = btn.dataset.status;
+                    renderGrid();
+                });
+            });
+            document.querySelectorAll('[data-type]').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    document.querySelectorAll('[data-type]').forEach(function (b) { b.classList.remove('active'); });
+                    btn.classList.add('active');
+                    activeType = btn.dataset.type;
+                    renderGrid();
+                });
+            });
+            document.getElementById('sort').addEventListener('change', function (e) {
+                activeSort = e.target.value;
+                renderGrid();
+            });
+            var debounce;
+            document.getElementById('search').addEventListener('input', function (e) {
+                clearTimeout(debounce);
+                debounce = setTimeout(function () {
+                    searchQuery = e.target.value.toLowerCase().trim();
+                    renderGrid();
+                }, 180);
+            });
+
+            var backdrop = document.getElementById('modal-backdrop');
+            document.getElementById('modal-close').addEventListener('click', function () {
+                backdrop.style.display = 'none';
+            });
+            backdrop.addEventListener('click', function (e) {
+                if (e.target === backdrop) backdrop.style.display = 'none';
+            });
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') backdrop.style.display = 'none';
+            });
+
+            document.getElementById('edit-toggle').addEventListener('click', function () {
+                var form = document.getElementById('edit-form');
+                form.style.display = form.style.display === 'grid' ? 'none' : 'grid';
+            });
+
+            document.getElementById('admin-refresh').addEventListener('click', function () {
+                if (currentItem) refreshMetadata(currentItem);
+            });
+
+            document.getElementById('save-edit').addEventListener('click', function () {
+                if (!currentItem) return;
+                var overrides = getOverrides();
+                overrides[currentItem.title] = {
+                    imdb_id: document.getElementById('edit-imdb-id').value.trim(),
+                    imdb_rating: document.getElementById('edit-imdb-rating').value.trim(),
+                    metascore: document.getElementById('edit-metascore').value.trim(),
+                    rotten_tomatoes: document.getElementById('edit-rotten').value.trim(),
+                    runtime: document.getElementById('edit-runtime').value.trim(),
+                    streaming_name: document.getElementById('edit-streaming-name').value.trim(),
+                    streaming_url: document.getElementById('edit-streaming-url').value.trim(),
+                    wikipedia: document.getElementById('edit-wikipedia').value.trim(),
+                    plot: document.getElementById('edit-plot').value.trim(),
+                };
+                localStorage.setItem('metadata_overrides_v1', JSON.stringify(overrides));
+                allItems = applyLocalOverrides(allItems);
+                renderGrid();
+                openModal(allItems.find(function (it) { return it.title === currentItem.title; }) || currentItem);
+            });
+
+            document.getElementById('download-overrides').addEventListener('click', function () {
+                var overrides = getOverrides();
+                var blob = new Blob([JSON.stringify(overrides, null, 2)], { type: 'application/json' });
+                var url = URL.createObjectURL(blob);
+                var a = document.createElement('a');
+                a.href = url;
+                a.download = 'overrides.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            });
+        }
+    })();
+    </script>
 </body>
 </html>
