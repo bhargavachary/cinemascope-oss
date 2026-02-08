@@ -521,7 +521,6 @@
                 <div class="modal-links" id="modal-links"></div>
                 <div class="modal-actions">
                     <button id="admin-refresh" class="primary">Auto-Fix (Local)</button>
-                    <button class="primary" id="download-overrides">Download overrides</button>
                 </div>
 
             </div>
@@ -821,18 +820,7 @@
                 if (currentItem) refreshMetadata(currentItem);
             });
 
-            document.getElementById('download-overrides').addEventListener('click', function () {
-                var overrides = getOverrides();
-                var blob = new Blob([JSON.stringify(overrides, null, 2)], { type: 'application/json' });
-                var url = URL.createObjectURL(blob);
-                var a = document.createElement('a');
-                a.href = url;
-                a.download = 'overrides.json';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-            });
+
         }
     })();
     </script>
