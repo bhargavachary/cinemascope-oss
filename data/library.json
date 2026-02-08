@@ -1,0 +1,18 @@
+[
+  {
+    "id": 1,
+    "title": "Maharaja",
+    "type": "Movie",
+    "status": "Watched",
+    "rating": 9,
+    "tags": ["Indian Regional Gem", "Thriller", "Drama"]
+  },
+  {
+    "id": 2,
+    "title": "Breaking Bad",
+    "type": "Series",
+    "status": "Watched",
+    "rating": 10,
+    "tags": ["Gritty Noir", "Crime", "Drama"]
+  }
+]
