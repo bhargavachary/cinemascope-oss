@@ -363,45 +363,9 @@
                 <div class="modal-links" id="modal-links"></div>
                 <div class="modal-actions">
                     <button id="admin-refresh" class="primary">Auto-Fix (Local)</button>
-                    <button id="edit-toggle">Edit metadata</button>
                     <button class="primary" id="download-overrides">Download overrides</button>
                 </div>
-                <div class="edit-form" id="edit-form">
-                    <div>
-                        <label>IMDb ID</label>
-                        <input id="edit-imdb-id" type="text" />
-                    </div>
-                    <div>
-                        <label>IMDb Rating</label>
-                        <input id="edit-imdb-rating" type="text" />
-                    </div>
-                    <div>
-                        <label>Metascore</label>
-                        <input id="edit-metascore" type="text" />
-                    </div>
-                    <div>
-                        <label>Rotten Tomatoes</label>
-                        <input id="edit-rotten" type="text" />
-                    </div>
-                    <div>
-                        <label>Runtime</label>
-                        <input id="edit-runtime" type="text" />
-                    </div>
-                    <div>
-                        <label>Streaming Name</label>
-                        <input id="edit-streaming-name" type="text" />
-                    </div>
-                    <div>
-                        <label>Streaming URL</label>
-                        <input id="edit-streaming-url" type="text" />
-                    </div>
-                    <div>
-                        <label>Wikipedia</label>
-                        <input id="edit-wikipedia" type="text" />
-                    </div>
-                    <textarea id="edit-plot" placeholder="Plot"></textarea>
-                    <button class="primary" id="save-edit">Save changes</button>
-                </div>
+
             </div>
         </div>
     </div>
@@ -434,16 +398,27 @@
             });
         }
 
+        function checkPosters(items) {
+            return Promise.all(items.map(function (item) {
+                var url = 'assets/posters/' + item.src;
+                return fetch(url, { method: 'HEAD' })
+                    .then(function (r) { item.has_poster = r.ok; return item; })
+                    .catch(function () { item.has_poster = false; return item; });
+            }));
+        }
+
         fetch('assets/manifest.json')
             .then(r => {
                 if (!r.ok) throw new Error('not found');
                 return r.json();
             })
-            .then(data => {
-                allItems = applyLocalOverrides(data);
-                renderStats();
-                renderTable(applySort(filterItems()));
-                bindEvents();
+            .then(function (data) {
+                checkPosters(data).then(function (checked) {
+                    allItems = applyLocalOverrides(checked);
+                    renderStats();
+                    renderTable(applySort(filterItems()));
+                    bindEvents();
+                });
             })
             .catch(() => {
                 document.getElementById('table-body').innerHTML = '';
@@ -478,7 +453,9 @@
             } else if (activeSort === 'status') {
                 list.sort(function (a, b) { return a.status.localeCompare(b.status); });
             }
-            return list;
+            var withPoster = list.filter(function (i) { return i.has_poster; });
+            var withoutPoster = list.filter(function (i) { return !i.has_poster; });
+            return withPoster.concat(withoutPoster);
         }
 
         function renderStats() {
@@ -537,15 +514,6 @@
             var subtitle = [item.year, item.type, item.language].filter(Boolean).join(' · ');
             document.getElementById('modal-subtitle').textContent = subtitle;
             document.getElementById('modal-plot').textContent = item.plot || 'Plot unavailable.';
-            document.getElementById('edit-imdb-id').value = item.imdb_id || '';
-            document.getElementById('edit-imdb-rating').value = item.imdb_rating || '';
-            document.getElementById('edit-metascore').value = item.metascore || '';
-            document.getElementById('edit-rotten').value = item.rotten_tomatoes || '';
-            document.getElementById('edit-runtime').value = item.runtime || '';
-            document.getElementById('edit-streaming-name').value = item.streaming_name || '';
-            document.getElementById('edit-streaming-url').value = item.streaming_url || '';
-            document.getElementById('edit-wikipedia').value = item.wikipedia || '';
-            document.getElementById('edit-plot').value = item.plot || '';
 
             var meta = '';
             meta += '<div><span>Status</span>' + item.status + '</div>';
@@ -638,33 +606,8 @@
                 if (e.key === 'Escape') backdrop.style.display = 'none';
             });
 
-            document.getElementById('edit-toggle').addEventListener('click', function () {
-                var form = document.getElementById('edit-form');
-                form.style.display = form.style.display === 'grid' ? 'none' : 'grid';
-            });
-
             document.getElementById('admin-refresh').addEventListener('click', function () {
                 if (currentItem) refreshMetadata(currentItem);
-            });
-
-            document.getElementById('save-edit').addEventListener('click', function () {
-                if (!currentItem) return;
-                var overrides = getOverrides();
-                overrides[currentItem.title] = {
-                    imdb_id: document.getElementById('edit-imdb-id').value.trim(),
-                    imdb_rating: document.getElementById('edit-imdb-rating').value.trim(),
-                    metascore: document.getElementById('edit-metascore').value.trim(),
-                    rotten_tomatoes: document.getElementById('edit-rotten').value.trim(),
-                    runtime: document.getElementById('edit-runtime').value.trim(),
-                    streaming_name: document.getElementById('edit-streaming-name').value.trim(),
-                    streaming_url: document.getElementById('edit-streaming-url').value.trim(),
-                    wikipedia: document.getElementById('edit-wikipedia').value.trim(),
-                    plot: document.getElementById('edit-plot').value.trim(),
-                };
-                localStorage.setItem('metadata_overrides_v1', JSON.stringify(overrides));
-                allItems = applyLocalOverrides(allItems);
-                renderTable(applySort(filterItems()));
-                openModal(allItems.find(function (it) { return it.title === currentItem.title; }) || currentItem);
             });
 
             document.getElementById('download-overrides').addEventListener('click', function () {
