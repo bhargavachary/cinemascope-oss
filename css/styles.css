@@ -224,10 +224,29 @@ header {
     padding: 0 1rem 2rem;
 }
 
+.section-header {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 2rem 0 1rem 0;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--border);
+}
+
+.subsection-header {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--accent);
+    margin: 1.5rem 0 0.75rem 0;
+    padding-left: 0.5rem;
+    border-left: 3px solid var(--accent);
+}
+
 .library-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 1rem;
+    margin-bottom: 1.5rem;
 }
 
 .loading {
@@ -316,6 +335,12 @@ header {
 .badge-status.watching { color: var(--accent); border-color: var(--accent); background: rgba(88,166,255,0.1); }
 .badge-status.plan-to-watch { color: var(--yellow); border-color: var(--yellow); background: rgba(210,153,34,0.1); }
 .badge-status.recommended { color: var(--purple); border-color: var(--purple); background: rgba(188,140,255,0.1); }
+
+.badge-language {
+    background: rgba(188, 140, 255, 0.15);
+    color: var(--purple);
+    border: 1px solid rgba(188, 140, 255, 0.3);
+}
 
 .card-tags {
     display: flex;
