@@ -20,6 +20,7 @@ def calculate_stats(library):
         'watched': sum(1 for item in library if item['status'] == 'Watched'),
         'watching': sum(1 for item in library if item['status'] == 'Watching'),
         'plan_to_watch': sum(1 for item in library if item['status'] == 'Plan to Watch'),
+        'recommended': sum(1 for item in library if item['status'] == 'Recommended'),
         'movies': sum(1 for item in library if item['type'] == 'Movie'),
         'series': sum(1 for item in library if item['type'] == 'Series'),
     }
@@ -66,6 +67,7 @@ def generate_readme(library, stats):
     readme.append(f"- **Total Watched**: {stats['watched']}")
     readme.append(f"- **Currently Watching**: {stats['watching']}")
     readme.append(f"- **Plan to Watch**: {stats['plan_to_watch']}")
+    readme.append(f"- **Recommended**: {stats['recommended']}")
     readme.append(f"- **Movies**: {stats['movies']}")
     readme.append(f"- **Series**: {stats['series']}")
     if stats['avg_rating'] > 0:
@@ -95,6 +97,18 @@ def generate_readme(library, stats):
         readme.append("## 🎬 Currently Watching")
         readme.append("")
         for item in categories['Watching']:
+            tags_str = ", ".join(item['tags']) if item['tags'] else ""
+            readme.append(f"### {item['title']}")
+            readme.append(f"- **Type**: {item['type']}")
+            if tags_str:
+                readme.append(f"- **Tags**: {tags_str}")
+            readme.append("")
+    
+    # Recommended section
+    if 'Recommended' in categories:
+        readme.append("## 🌟 Recommended")
+        readme.append("")
+        for item in categories['Recommended']:
             tags_str = ", ".join(item['tags']) if item['tags'] else ""
             readme.append(f"### {item['title']}")
             readme.append(f"- **Type**: {item['type']}")
