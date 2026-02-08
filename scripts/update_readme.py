@@ -20,6 +20,7 @@ def calculate_stats(library):
         'watched': sum(1 for item in library if item['status'] == 'Watched'),
         'watching': sum(1 for item in library if item['status'] == 'Watching'),
         'plan_to_watch': sum(1 for item in library if item['status'] == 'Plan to Watch'),
+        'recommended': sum(1 for item in library if item['status'] == 'Recommended'),
         'movies': sum(1 for item in library if item['type'] == 'Movie'),
         'series': sum(1 for item in library if item['type'] == 'Series'),
     }
@@ -29,6 +30,18 @@ def calculate_stats(library):
     stats['avg_rating'] = round(sum(watched_ratings) / len(watched_ratings), 1) if watched_ratings else 0
     
     return stats
+
+
+def format_item_section(item):
+    """Format an item for display in README."""
+    lines = []
+    tags_str = ", ".join(item['tags']) if item['tags'] else ""
+    lines.append(f"### {item['title']}")
+    lines.append(f"- **Type**: {item['type']}")
+    if tags_str:
+        lines.append(f"- **Tags**: {tags_str}")
+    lines.append("")
+    return lines
 
 
 def categorize_by_status(library):
@@ -66,6 +79,7 @@ def generate_readme(library, stats):
     readme.append(f"- **Total Watched**: {stats['watched']}")
     readme.append(f"- **Currently Watching**: {stats['watching']}")
     readme.append(f"- **Plan to Watch**: {stats['plan_to_watch']}")
+    readme.append(f"- **Recommended**: {stats['recommended']}")
     readme.append(f"- **Movies**: {stats['movies']}")
     readme.append(f"- **Series**: {stats['series']}")
     if stats['avg_rating'] > 0:
@@ -95,24 +109,21 @@ def generate_readme(library, stats):
         readme.append("## 🎬 Currently Watching")
         readme.append("")
         for item in categories['Watching']:
-            tags_str = ", ".join(item['tags']) if item['tags'] else ""
-            readme.append(f"### {item['title']}")
-            readme.append(f"- **Type**: {item['type']}")
-            if tags_str:
-                readme.append(f"- **Tags**: {tags_str}")
-            readme.append("")
+            readme.extend(format_item_section(item))
+    
+    # Recommended section
+    if 'Recommended' in categories:
+        readme.append("## 🌟 Recommended")
+        readme.append("")
+        for item in categories['Recommended']:
+            readme.extend(format_item_section(item))
     
     # Plan to Watch section
     if 'Plan to Watch' in categories:
         readme.append("## 📝 Plan to Watch")
         readme.append("")
         for item in categories['Plan to Watch']:
-            tags_str = ", ".join(item['tags']) if item['tags'] else ""
-            readme.append(f"### {item['title']}")
-            readme.append(f"- **Type**: {item['type']}")
-            if tags_str:
-                readme.append(f"- **Tags**: {tags_str}")
-            readme.append("")
+            readme.extend(format_item_section(item))
     
     # Footer
     readme.append("---")
