@@ -32,6 +32,18 @@ def calculate_stats(library):
     return stats
 
 
+def format_item_section(item):
+    """Format an item for display in README."""
+    lines = []
+    tags_str = ", ".join(item['tags']) if item['tags'] else ""
+    lines.append(f"### {item['title']}")
+    lines.append(f"- **Type**: {item['type']}")
+    if tags_str:
+        lines.append(f"- **Tags**: {tags_str}")
+    lines.append("")
+    return lines
+
+
 def categorize_by_status(library):
     """Categorize library items by status."""
     categories = defaultdict(list)
@@ -97,36 +109,21 @@ def generate_readme(library, stats):
         readme.append("## 🎬 Currently Watching")
         readme.append("")
         for item in categories['Watching']:
-            tags_str = ", ".join(item['tags']) if item['tags'] else ""
-            readme.append(f"### {item['title']}")
-            readme.append(f"- **Type**: {item['type']}")
-            if tags_str:
-                readme.append(f"- **Tags**: {tags_str}")
-            readme.append("")
+            readme.extend(format_item_section(item))
     
     # Recommended section
     if 'Recommended' in categories:
         readme.append("## 🌟 Recommended")
         readme.append("")
         for item in categories['Recommended']:
-            tags_str = ", ".join(item['tags']) if item['tags'] else ""
-            readme.append(f"### {item['title']}")
-            readme.append(f"- **Type**: {item['type']}")
-            if tags_str:
-                readme.append(f"- **Tags**: {tags_str}")
-            readme.append("")
+            readme.extend(format_item_section(item))
     
     # Plan to Watch section
     if 'Plan to Watch' in categories:
         readme.append("## 📝 Plan to Watch")
         readme.append("")
         for item in categories['Plan to Watch']:
-            tags_str = ", ".join(item['tags']) if item['tags'] else ""
-            readme.append(f"### {item['title']}")
-            readme.append(f"- **Type**: {item['type']}")
-            if tags_str:
-                readme.append(f"- **Tags**: {tags_str}")
-            readme.append("")
+            readme.extend(format_item_section(item))
     
     # Footer
     readme.append("---")

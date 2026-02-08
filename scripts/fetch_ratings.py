@@ -196,13 +196,16 @@ def fetch_ratings_for_item(item):
         item['external_ratings']['movielens'] = movielens
     
     # Update main rating field if external ratings are available
+    # Only update if there's no existing rating (0 is considered 'no rating')
     # Priority: IMDb > Metacritic (converted to /10) > Letterboxd (converted to /10)
-    if not item['rating'] or item['rating'] == 0:
+    if item['rating'] == 0:
         if imdb and 'rating' in imdb:
             item['rating'] = round(imdb['rating'], 1)
         elif metacritic and 'metascore' in metacritic:
+            # Convert Metacritic's 0-100 scale to 0-10 scale
             item['rating'] = round(metacritic['metascore'] / 10, 1)
         elif letterboxd and 'rating' in letterboxd:
+            # Convert Letterboxd's 0-5 scale to 0-10 scale
             item['rating'] = round((letterboxd['rating'] / letterboxd['scale']) * 10, 1)
     
     # Rate limiting to be polite to servers
