@@ -177,7 +177,7 @@
             padding: 24px 40px 60px;
         }
         .masonry {
-            column-count: 5;
+            column-count: 4;
             column-gap: var(--gap);
         }
 
@@ -198,6 +198,8 @@
             height: auto;
             display: block;
             transition: transform 0.35s ease;
+            aspect-ratio: 16 / 9;
+            object-fit: cover;
         }
         .card:hover img { transform: scale(1.03); }
 
@@ -442,15 +444,15 @@
         }
 
         /* ─── Responsive ─────────────────────────────── */
-        @media (max-width: 1400px) { .masonry { column-count: 4; } }
-        @media (max-width: 1000px) { .masonry { column-count: 3; } }
+        @media (max-width: 1400px) { .masonry { column-count: 3; } }
+        @media (max-width: 1000px) { .masonry { column-count: 2; } }
         @media (max-width: 700px) {
-            .masonry { column-count: 2; }
+            .masonry { column-count: 1; }
             .site-header, main, .filter-bar, footer { padding-left: 16px; padding-right: 16px; }
             .search-wrapper input { width: 140px; }
         }
         @media (max-width: 450px) {
-            .masonry { column-count: 2; column-gap: 8px; }
+            .masonry { column-count: 1; column-gap: 8px; }
             .card { margin-bottom: 8px; }
         }
     </style>
@@ -473,7 +475,6 @@
             <button class="filter-btn" data-status="Watched"><span class="dot watched"></span> Watched</button>
             <button class="filter-btn" data-status="Recommended"><span class="dot recommended"></span> Picks</button>
             <button class="filter-btn" data-status="Plan to Watch"><span class="dot planned"></span> Watchlist</button>
-            <button class="filter-btn" data-status="Tagged">🏷️ Tagged</button>
         </div>
         <div class="filter-divider"></div>
         <div class="filter-group" id="type-filters">
