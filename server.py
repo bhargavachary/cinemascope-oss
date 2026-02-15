@@ -249,7 +249,7 @@ def add_cors_headers(response):
 
 @app.route("/")
 def index():
-    return send_from_directory(str(BASE_DIR), "index.html")
+    return send_from_directory(str(BASE_DIR), "table.html")
 
 
 @app.route("/<path:path>")

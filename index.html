@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script>/* Default view: redirect to table view */ if (location.pathname === '/' || location.pathname.endsWith('index.html')) { location.replace('table.html'); }</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎬 Bhargav's Cinemascope</title>
+    <title>Cinemascope</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -461,7 +462,7 @@
 
     <header class="site-header">
         <div>
-            <h1>🎬 Bhargav's Cinemascope</h1>
+            <h1>Cinemascope</h1>
             <p class="tagline" id="stats">Loading&hellip;</p>
         </div>
         <div class="header-actions">
@@ -651,15 +652,7 @@
         }
 
         function renderFooter() {
-            var api = allItems.filter(function(i){ return i.poster_source === 'omdb'; }).length;
-            var ph  = allItems.filter(function(i){ return i.poster_source === 'placeholder'; }).length;
-            var ca  = allItems.filter(function(i){ return i.poster_source === 'cached'; }).length;
-            var parts = [];
-            if (api) parts.push(api + ' real posters');
-            if (ca)  parts.push(ca + ' cached');
-            if (ph)  parts.push(ph + ' placeholders');
-            document.getElementById('footer-info').textContent =
-                parts.join(' \u00B7 ') + ' \u00B7 Built with fetch_assets.py';
+            document.getElementById('footer-info').textContent = 'Maintained with Love by Bhargav and Copilot';
         }
 
         function getOverrides() {

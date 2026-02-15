@@ -1,4 +1,4 @@
-# 🎬 Bhargav's Cinemascope
+# Cinemascope
 
 A personal movies & series tracker with two browsing modes:
 
