@@ -2,121 +2,127 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Cinemascope</title>
-    <meta name="description" content="A curated collection of movies and series — tracked, rated, and recommended.">
-    <meta name="theme-color" content="#0a0a0f">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cinemascope Next-Gen</title>
+    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/app.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700&family=Sora:wght@400;600&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- ─── Header ────────────────────────────────────── -->
-    <header class="site-header">
-        <div class="header-brand">
-            <h1>Cinemascope</h1>
-            <p class="tagline" id="stats-summary">Loading…</p>
+    <nav class="glass-nav">
+        <div class="logo">CINEMASCOPE <span class="badge">NG</span></div>
+        
+        <div class="filters">
+            <button class="filter-btn active" data-filter="all">All</button>
+            <button class="filter-btn" data-filter="Movie">Movies</button>
+            <button class="filter-btn" data-filter="Series">Series</button>
+            <button class="filter-btn" data-filter="Watched">Watched</button>
+            <button class="filter-btn" data-filter="Recommended">Picks</button>
         </div>
-        <div class="header-actions">
-            <button class="view-toggle" id="view-toggle" type="button" aria-label="Switch view">
-                <span class="view-toggle-icon" id="view-toggle-icon">◫</span>
-                <span class="view-toggle-label" id="view-toggle-label">Mosaic</span>
-            </button>
-            <a class="cta-button" href="https://bhargavachary.in/" rel="noopener">Home ↗</a>
-        </div>
-    </header>
 
-    <!-- ─── Filter Bar ────────────────────────────────── -->
-    <nav class="filter-bar" id="filter-bar">
-        <div class="filter-scroll">
-            <div class="filter-group" id="status-filters">
-                <button class="chip active" data-status="all" type="button">All</button>
-                <button class="chip" data-status="Watched" type="button"><span class="dot dot-watched"></span>Watched</button>
-                <button class="chip" data-status="Recommended" type="button"><span class="dot dot-recommended"></span>Picks</button>
-                <button class="chip" data-status="Plan to Watch" type="button"><span class="dot dot-planned"></span>Watchlist</button>
-            </div>
-            <span class="filter-divider" aria-hidden="true"></span>
-            <div class="filter-group" id="type-filters">
-                <button class="chip active" data-type="all" type="button">All</button>
-                <button class="chip" data-type="Movie" type="button">🎬 Movies</button>
-                <button class="chip" data-type="Series" type="button">📺 Series</button>
-            </div>
-        </div>
-        <div class="filter-controls">
-            <select id="sort-select" aria-label="Sort by">
-                <option value="imdb_rating">IMDb Rating</option>
-                <option value="title">Title A–Z</option>
-                <option value="metascore">Metascore</option>
-                <option value="rotten_tomatoes">Rotten Tomatoes</option>
-                <option value="status">Status</option>
-            </select>
-            <span class="results-count" id="results-count"></span>
-            <div class="search-wrapper">
-                <svg class="search-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd"/></svg>
-                <input type="search" id="search-input" placeholder="Search…" aria-label="Search titles">
+        <div class="tools">
+            <button id="theme-toggle" class="icon-btn"><i class="fa-solid fa-sun"></i></button>
+            <div class="data-controls">
+                <button id="export-btn" class="outline-btn"><i class="fa-solid fa-download"></i> Export CSV</button>
+                <label for="import-file" class="outline-btn"><i class="fa-solid fa-upload"></i> Import</label>
+                <input type="file" id="import-file" accept=".csv" hidden>
+                <button id="edit-mode-btn" class="outline-btn highlight"><i class="fa-solid fa-pen"></i> Edit Mode</button>
             </div>
         </div>
     </nav>
 
-    <!-- ─── Main Content ─────────────────────────────── -->
-    <main id="main-content">
-        <!-- Table View (default) -->
-        <div class="table-container" id="table-view">
-            <table id="data-table">
-                <thead>
-                    <tr>
-                        <th class="col-num">#</th>
-                        <th class="col-title">Title</th>
-                        <th class="col-type hide-sm">Type</th>
-                        <th class="col-rating">IMDb</th>
-                        <th class="col-meta hide-md">Meta</th>
-                        <th class="col-rt hide-md">RT</th>
-                        <th class="col-status">Status</th>
-                        <th class="col-link hide-sm">Link</th>
-                    </tr>
-                </thead>
-                <tbody id="table-body"></tbody>
-            </table>
-        </div>
-
-        <!-- Mosaic View -->
-        <div class="mosaic" id="mosaic-view" style="display:none"></div>
-
-        <!-- Empty State -->
-        <div class="empty-state" id="empty-state" style="display:none">
-            <div class="empty-icon">🔍</div>
-            <h2>No titles match</h2>
-            <p>Try adjusting your filters or search query.</p>
-        </div>
+    <main id="movie-grid" class="grid-container">
+        <div class="skeleton-card"></div>
+        <div class="skeleton-card"></div>
+        <div class="skeleton-card"></div>
+        <div class="skeleton-card"></div>
     </main>
 
-    <!-- ─── Footer ────────────────────────────────────── -->
-    <footer>
-        <p>Maintained with ❤️ by Bhargav and Copilot</p>
-    </footer>
-
-    <!-- ─── Detail Modal ──────────────────────────────── -->
-    <div class="modal-backdrop" id="modal-backdrop" aria-hidden="true">
-        <div class="modal" role="dialog" aria-modal="true" aria-label="Item details">
-            <button class="modal-close" id="modal-close" type="button" aria-label="Close">✕</button>
-            <div class="modal-poster-wrap">
-                <img id="modal-poster" alt="" loading="lazy">
-            </div>
-            <div class="modal-body">
-                <h2 class="modal-title" id="modal-title"></h2>
-                <p class="modal-subtitle" id="modal-subtitle"></p>
-                <div class="modal-meta-grid" id="modal-meta"></div>
-                <p class="modal-plot" id="modal-plot"></p>
-                <div class="modal-links" id="modal-links"></div>
-                <div class="modal-admin">
-                    <button id="admin-refresh" type="button" class="btn-admin" style="display:none">Auto-Fix (Local)</button>
+    <div id="movie-modal" class="modal-backdrop">
+        <div class="modal-content">
+            <button class="close-modal"><i class="fa-solid fa-xmark"></i></button>
+            
+            <div class="modal-hero">
+                <div class="hero-overlay"></div>
+                <img id="modal-backdrop-img" src="" alt="Backdrop">
+                <div class="hero-text">
+                    <h1 id="modal-title">Title</h1>
+                    <div class="metrics-row">
+                        <span class="metric"><i class="fa-solid fa-star"></i> <span id="modal-rating">9.0</span></span>
+                        <span class="metric"><i class="fa-solid fa-film"></i> <span id="modal-genre">Sci-Fi</span></span>
+                        <span class="metric"><i class="fa-solid fa-clock"></i> <span id="modal-duration">2h 14m</span></span>
+                        <span class="metric"><i class="fa-solid fa-calendar"></i> <span id="modal-year">2024</span></span>
+                    </div>
                 </div>
+            </div>
+
+            <div class="modal-body">
+                <div class="synopsis-section">
+                    <h3>Synopsis</h3>
+                    <p id="modal-desc">Loading synopsis...</p>
+                    
+                    <h3>Cast</h3>
+                    <div class="cast-rail" id="modal-cast">
+                        </div>
+                </div>
+
+                <div class="booking-section">
+                    <div class="availability">
+                        <span>Seat Occupancy</span>
+                        <div class="progress-bar"><div class="fill" id="occupancy-fill" style="width: 75%"></div></div>
+                    </div>
+                    
+                    <div id="booking-flow">
+                        <div class="showtimes" id="showtimes-container">
+                            </div>
+                        <button id="start-booking-btn" class="action-btn">Book Tickets</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="seat-map-view hidden">
+                <div class="screen">SCREEN THIS WAY</div>
+                <div class="seats-grid" id="seats-grid">
+                    </div>
+                <div class="booking-footer">
+                    <div class="price-tag">Total: $<span id="total-price">0</span></div>
+                    <button id="confirm-booking" class="action-btn">Confirm Payment</button>
+                </div>
+            </div>
+
+            <div class="success-view hidden">
+                <i class="fa-solid fa-circle-check success-icon"></i>
+                <h2>Booking Confirmed!</h2>
+                <div class="qr-placeholder">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=CinemascopeTicket" alt="QR">
+                </div>
+                <p>Check your email for tickets.</p>
             </div>
         </div>
     </div>
 
-    <script src="js/app.js"></script>
+    <div id="edit-table-container" class="hidden">
+        <table>
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Type</th>
+                    <th>Rating</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="edit-table-body">
+                </tbody>
+        </table>
+    </div>
+
+    <script src="script.js"></script>
 </body>
 </html>
