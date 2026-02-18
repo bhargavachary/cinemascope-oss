@@ -1,108 +1,123 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cinemascope Archive</title>
-    
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700&family=Sora:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <nav class="glass-nav">
-        <div class="logo">CINEMASCOPE <span class="badge">ARCHIVE</span></div>
-        
-        <div class="view-toggles">
-            <button id="view-grid" class="icon-btn active" title="Mosaic View"><i class="fa-solid fa-border-all"></i></button>
-            <button id="view-list" class="icon-btn" title="List View"><i class="fa-solid fa-list"></i></button>
+    <!-- Ambient depth layer — glass refracts this -->
+    <div class="ambient-mesh" aria-hidden="true">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
+
+    <!-- Floating pill nav -->
+    <nav class="glass-nav" role="navigation">
+        <div class="logo">
+            <i class="fa-solid fa-clapperboard"></i>
+            <span>CINEMASCOPE</span>
         </div>
 
-        <div class="filters">
-            <button class="filter-btn active" data-filter="all">All</button>
-            <button class="filter-btn" data-filter="Watched">Watched</button>
-            <button class="filter-btn" data-filter="Plan to Watch">Planned</button>
-            <button class="filter-btn" data-filter="Recommended">Picks</button>
+        <div class="nav-center">
+            <div class="view-toggles">
+                <button id="view-grid" class="icon-btn active" title="Mosaic view" aria-pressed="true">
+                    <i class="fa-solid fa-border-all"></i>
+                </button>
+                <button id="view-list" class="icon-btn" title="List view" aria-pressed="false">
+                    <i class="fa-solid fa-list"></i>
+                </button>
+            </div>
+
+            <div class="filters" role="group" aria-label="Filter by status">
+                <button class="filter-pill active" data-filter="all">All</button>
+                <button class="filter-pill" data-filter="Watched">Watched</button>
+                <button class="filter-pill" data-filter="Plan to Watch">Planned</button>
+                <button class="filter-pill" data-filter="Recommended">Picks</button>
+            </div>
         </div>
 
-        <div class="tools">
-            <button id="theme-toggle" class="icon-btn"><i class="fa-solid fa-sun"></i></button>
-            
-            <div id="local-controls" class="data-controls hidden">
-                <button id="export-btn" class="outline-btn"><i class="fa-solid fa-download"></i> CSV</button>
-                <label for="import-file" class="outline-btn"><i class="fa-solid fa-upload"></i> Import</label>
+        <div class="nav-end">
+            <button id="theme-toggle" class="icon-btn" title="Toggle theme" aria-label="Toggle light/dark theme">
+                <i class="fa-solid fa-moon"></i>
+            </button>
+
+            <div id="local-controls" class="local-tools hidden">
+                <button id="export-btn" class="icon-btn" title="Export CSV"><i class="fa-solid fa-download"></i></button>
+                <label for="import-file" class="icon-btn" title="Import CSV" role="button"><i class="fa-solid fa-upload"></i></label>
                 <input type="file" id="import-file" accept=".csv" hidden>
-                <button id="edit-mode-btn" class="outline-btn highlight"><i class="fa-solid fa-pen"></i> Edit</button>
+                <button id="edit-mode-btn" class="icon-btn accent" title="Edit mode"><i class="fa-solid fa-pen-to-square"></i></button>
             </div>
         </div>
     </nav>
 
+    <!-- Content -->
     <main id="main-container">
         <div id="movie-grid" class="grid-container"></div>
 
         <div id="movie-list" class="list-container hidden">
-            <table class="archive-table">
-                <thead>
-                    <tr>
-                        <th onclick="sortTable('title')">Title <i class="fa-solid fa-sort"></i></th>
-                        <th onclick="sortTable('year')">Year <i class="fa-solid fa-sort"></i></th>
-                        <th onclick="sortTable('type')">Type <i class="fa-solid fa-sort"></i></th>
-                        <th onclick="sortTable('rating')">Rating <i class="fa-solid fa-sort"></i></th>
-                        <th onclick="sortTable('status')">Status <i class="fa-solid fa-sort"></i></th>
-                        <th>Links</th>
-                    </tr>
-                </thead>
-                <tbody id="list-body"></tbody>
-            </table>
+            <div class="glass-panel">
+                <table class="archive-table">
+                    <thead>
+                        <tr>
+                            <th onclick="sortTable('title')">Title <i class="fa-solid fa-sort fa-xs"></i></th>
+                            <th onclick="sortTable('year')">Year <i class="fa-solid fa-sort fa-xs"></i></th>
+                            <th onclick="sortTable('type')">Type <i class="fa-solid fa-sort fa-xs"></i></th>
+                            <th onclick="sortTable('rating')">Rating <i class="fa-solid fa-sort fa-xs"></i></th>
+                            <th onclick="sortTable('status')">Status <i class="fa-solid fa-sort fa-xs"></i></th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="list-body"></tbody>
+                </table>
+            </div>
         </div>
     </main>
 
-    <div id="movie-modal" class="modal-backdrop">
-        <div class="modal-content">
-            <button class="close-modal"><i class="fa-solid fa-xmark"></i></button>
-            
-            <div class="modal-hero">
-                <div class="hero-overlay"></div>
-                <img id="modal-backdrop-img" src="" alt="Backdrop">
-                <div class="hero-text">
-                    <h1 id="modal-title">Title</h1>
-                    <div class="metrics-row">
-                        <span class="metric"><i class="fa-solid fa-star"></i> <span id="modal-rating"></span></span>
-                        <span class="metric"><i class="fa-solid fa-film"></i> <span id="modal-type"></span></span>
-                        <span class="metric"><i class="fa-solid fa-clock"></i> <span id="modal-duration"></span></span>
-                        <span class="metric"><i class="fa-solid fa-calendar"></i> <span id="modal-year"></span></span>
+    <!-- Deep-Dive Modal -->
+    <div id="movie-modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <div class="modal-glass-card">
+            <button class="close-modal" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+
+            <div class="modal-cover-art">
+                <img id="modal-img" src="" alt="" loading="lazy">
+                <div class="modal-cover-gradient"></div>
+                <div class="modal-cover-content">
+                    <span id="modal-type" class="type-chip">Movie</span>
+                    <h2 id="modal-title">—</h2>
+                    <div class="modal-meta-row">
+                        <span><i class="fa-solid fa-star" style="color:#f5c518"></i> <span id="modal-rating">—</span></span>
+                        <span><i class="fa-regular fa-clock"></i> <span id="modal-duration">—</span></span>
+                        <span><i class="fa-regular fa-calendar"></i> <span id="modal-year">—</span></span>
                     </div>
                 </div>
             </div>
 
             <div class="modal-body">
-                <div class="primary-info">
-                    <h3>Synopsis</h3>
-                    <p id="modal-synopsis" class="synopsis-text"></p>
-                    
-                    <h3>Critics' Consensus</h3>
-                    <div class="critics-box">
-                        <i class="fa-solid fa-quote-left"></i>
-                        <p id="modal-critics"></p>
-                    </div>
+                <p id="modal-synopsis" class="synopsis-text">—</p>
 
-                    <h3>Awards &amp; Recognition</h3>
-                    <div class="awards-rail" id="modal-awards"></div>
+                <div class="modal-info-row">
+                    <div class="info-cell">
+                        <span class="info-label">Status</span>
+                        <span id="modal-status" class="status-chip">—</span>
+                    </div>
+                    <div class="info-cell">
+                        <span class="info-label">Critics</span>
+                        <span id="modal-critics" class="critics-text">—</span>
+                    </div>
                 </div>
 
-                <div class="secondary-info">
-                    <div class="info-block">
-                        <h4>Status</h4>
-                        <span id="modal-status" class="status-pill">Watched</span>
-                    </div>
-                    
-                    <div class="info-block">
-                        <h4>Festival History</h4>
-                        <ul id="modal-festivals" class="festival-list"></ul>
-                    </div>
+                <div class="awards-block">
+                    <span class="info-label">Awards &amp; Recognition</span>
+                    <div id="modal-awards" class="awards-rail"></div>
                 </div>
             </div>
         </div>
