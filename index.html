@@ -3,12 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cinemascope Next-Gen</title>
+    <title>Cinemascope Archive</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700&family=Sora:wght@400;600&display=swap" rel="stylesheet">
-    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <link rel="stylesheet" href="style.css">
@@ -16,32 +14,50 @@
 <body>
 
     <nav class="glass-nav">
-        <div class="logo">CINEMASCOPE <span class="badge">NG</span></div>
+        <div class="logo">CINEMASCOPE <span class="badge">ARCHIVE</span></div>
         
+        <div class="view-toggles">
+            <button id="view-grid" class="icon-btn active" title="Mosaic View"><i class="fa-solid fa-border-all"></i></button>
+            <button id="view-list" class="icon-btn" title="List View"><i class="fa-solid fa-list"></i></button>
+        </div>
+
         <div class="filters">
             <button class="filter-btn active" data-filter="all">All</button>
-            <button class="filter-btn" data-filter="Movie">Movies</button>
-            <button class="filter-btn" data-filter="Series">Series</button>
             <button class="filter-btn" data-filter="Watched">Watched</button>
+            <button class="filter-btn" data-filter="Plan to Watch">Planned</button>
             <button class="filter-btn" data-filter="Recommended">Picks</button>
         </div>
 
         <div class="tools">
             <button id="theme-toggle" class="icon-btn"><i class="fa-solid fa-sun"></i></button>
-            <div class="data-controls">
-                <button id="export-btn" class="outline-btn"><i class="fa-solid fa-download"></i> Export CSV</button>
+            
+            <div id="local-controls" class="data-controls hidden">
+                <button id="export-btn" class="outline-btn"><i class="fa-solid fa-download"></i> CSV</button>
                 <label for="import-file" class="outline-btn"><i class="fa-solid fa-upload"></i> Import</label>
                 <input type="file" id="import-file" accept=".csv" hidden>
-                <button id="edit-mode-btn" class="outline-btn highlight"><i class="fa-solid fa-pen"></i> Edit Mode</button>
+                <button id="edit-mode-btn" class="outline-btn highlight"><i class="fa-solid fa-pen"></i> Edit</button>
             </div>
         </div>
     </nav>
 
-    <main id="movie-grid" class="grid-container">
-        <div class="skeleton-card"></div>
-        <div class="skeleton-card"></div>
-        <div class="skeleton-card"></div>
-        <div class="skeleton-card"></div>
+    <main id="main-container">
+        <div id="movie-grid" class="grid-container"></div>
+
+        <div id="movie-list" class="list-container hidden">
+            <table class="archive-table">
+                <thead>
+                    <tr>
+                        <th onclick="sortTable('title')">Title <i class="fa-solid fa-sort"></i></th>
+                        <th onclick="sortTable('year')">Year <i class="fa-solid fa-sort"></i></th>
+                        <th onclick="sortTable('type')">Type <i class="fa-solid fa-sort"></i></th>
+                        <th onclick="sortTable('rating')">Rating <i class="fa-solid fa-sort"></i></th>
+                        <th onclick="sortTable('status')">Status <i class="fa-solid fa-sort"></i></th>
+                        <th>Links</th>
+                    </tr>
+                </thead>
+                <tbody id="list-body"></tbody>
+            </table>
+        </div>
     </main>
 
     <div id="movie-modal" class="modal-backdrop">
@@ -54,73 +70,42 @@
                 <div class="hero-text">
                     <h1 id="modal-title">Title</h1>
                     <div class="metrics-row">
-                        <span class="metric"><i class="fa-solid fa-star"></i> <span id="modal-rating">9.0</span></span>
-                        <span class="metric"><i class="fa-solid fa-film"></i> <span id="modal-genre">Sci-Fi</span></span>
-                        <span class="metric"><i class="fa-solid fa-clock"></i> <span id="modal-duration">2h 14m</span></span>
-                        <span class="metric"><i class="fa-solid fa-calendar"></i> <span id="modal-year">2024</span></span>
+                        <span class="metric"><i class="fa-solid fa-star"></i> <span id="modal-rating"></span></span>
+                        <span class="metric"><i class="fa-solid fa-film"></i> <span id="modal-type"></span></span>
+                        <span class="metric"><i class="fa-solid fa-clock"></i> <span id="modal-duration"></span></span>
+                        <span class="metric"><i class="fa-solid fa-calendar"></i> <span id="modal-year"></span></span>
                     </div>
                 </div>
             </div>
 
             <div class="modal-body">
-                <div class="synopsis-section">
+                <div class="primary-info">
                     <h3>Synopsis</h3>
-                    <p id="modal-desc">Loading synopsis...</p>
+                    <p id="modal-synopsis" class="synopsis-text"></p>
                     
-                    <h3>Cast</h3>
-                    <div class="cast-rail" id="modal-cast">
-                        </div>
+                    <h3>Critics' Consensus</h3>
+                    <div class="critics-box">
+                        <i class="fa-solid fa-quote-left"></i>
+                        <p id="modal-critics"></p>
+                    </div>
+
+                    <h3>Awards &amp; Recognition</h3>
+                    <div class="awards-rail" id="modal-awards"></div>
                 </div>
 
-                <div class="booking-section">
-                    <div class="availability">
-                        <span>Seat Occupancy</span>
-                        <div class="progress-bar"><div class="fill" id="occupancy-fill" style="width: 75%"></div></div>
+                <div class="secondary-info">
+                    <div class="info-block">
+                        <h4>Status</h4>
+                        <span id="modal-status" class="status-pill">Watched</span>
                     </div>
                     
-                    <div id="booking-flow">
-                        <div class="showtimes" id="showtimes-container">
-                            </div>
-                        <button id="start-booking-btn" class="action-btn">Book Tickets</button>
+                    <div class="info-block">
+                        <h4>Festival History</h4>
+                        <ul id="modal-festivals" class="festival-list"></ul>
                     </div>
                 </div>
-            </div>
-            
-            <div class="seat-map-view hidden">
-                <div class="screen">SCREEN THIS WAY</div>
-                <div class="seats-grid" id="seats-grid">
-                    </div>
-                <div class="booking-footer">
-                    <div class="price-tag">Total: $<span id="total-price">0</span></div>
-                    <button id="confirm-booking" class="action-btn">Confirm Payment</button>
-                </div>
-            </div>
-
-            <div class="success-view hidden">
-                <i class="fa-solid fa-circle-check success-icon"></i>
-                <h2>Booking Confirmed!</h2>
-                <div class="qr-placeholder">
-                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=CinemascopeTicket" alt="QR">
-                </div>
-                <p>Check your email for tickets.</p>
             </div>
         </div>
-    </div>
-
-    <div id="edit-table-container" class="hidden">
-        <table>
-            <thead>
-                <tr>
-                    <th>Title</th>
-                    <th>Type</th>
-                    <th>Rating</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody id="edit-table-body">
-                </tbody>
-        </table>
     </div>
 
     <script src="script.js"></script>

@@ -1,6 +1,11 @@
-/* --- 1. Data Ingestion & Parsing --- */
+/* --- 1. Environment & Setup --- */
+// Check if running locally (localhost or IP) vs GitHub Pages
+const isLocal = ['localhost', '127.0.0.1', ''].includes(window.location.hostname);
+if (isLocal) {
+    document.getElementById('local-controls').classList.remove('hidden');
+}
 
-// The raw string provided in the prompt
+/* --- 2. Data Parsing & Enrichment --- */
 const rawDataString = `
 1	Breaking Bad	Series	9.5	N/A	96%	Watched	IMDb↗
 2	Chernobyl	Series	9.3	N/A	—	Watched	IMDb↗
@@ -67,334 +72,197 @@ const rawDataString = `
 63	Aan Paavam Pollathathu	Movie	N/A	N/A	—	Watched	IMDb↗
 `;
 
-// Helper: Hallucinate images based on title keywords to ensure high fidelity demo
-const getImage = (title, type) => {
-    const keyword = title.split(' ')[0];
-    const category = type === 'Series' ? 'tv' : 'movie';
-    // Using Unsplash Source for persistent demo images
-    return `https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=500&q=80&txt=${keyword}`;
+// Helper: Generate a reliable placeholder poster if API is missing
+const getPoster = (title) => {
+    const bg = '1a1a1a';
+    const color = 'e50914'; // Cinema Red
+    return `https://placehold.co/400x600/${bg}/${color}?text=${encodeURIComponent(title)}&font=lora`;
 };
 
 const parseData = (raw) => {
     const lines = raw.trim().split('\n');
     return lines.map(line => {
-        // Splitting by tabs based on the visual structure of the prompt copy-paste
         const parts = line.split('\t');
-        // Handle varied line lengths/formats gracefully
-        const id = parts[0];
         const title = parts[1];
         const type = parts[2];
         const rating = parts[3] === '—' || parts[3] === 'N/A' ? 'NR' : parts[3];
-        const status = parts[6] || parts[parts.length - 2]; // Fallback for messier lines
-        
+        const status = parts[6] || parts[parts.length - 2] || 'Unknown';
+
+        // Hallucinated "Archivist" Metadata
         return {
-            id,
-            title,
-            type,
-            rating,
-            status: status?.trim(),
-            // Hallucinated Data for the "Next Gen" feel
-            poster: `https://placehold.co/400x600/1a1a1a/FFF?text=${encodeURIComponent(title)}`, 
-            backdrop: `https://placehold.co/1200x600/111/333?text=${encodeURIComponent(title + " Backdrop")}`,
-            synopsis: `A gripping ${type.toLowerCase()} that explores the depths of human emotion in ${title}. A must-watch masterpiece.`,
-            year: Math.floor(Math.random() * (2024 - 1990) + 1990),
-            duration: `${Math.floor(Math.random() * 2) + 1}h ${Math.floor(Math.random() * 59)}m`
+            id: parts[0],
+            title: title,
+            type: type,
+            rating: rating,
+            status: status.trim(),
+            poster: getPoster(title),
+            backdrop: `https://placehold.co/1200x600/0f0f0f/333?text=${encodeURIComponent(title + " Still")}`,
+            synopsis: `An in-depth exploration of the human condition in this defining ${type.toLowerCase()}. The cinematography of ${title} captures the essence of its era.`,
+            year: Math.floor(Math.random() * (2024 - 1980) + 1980),
+            duration: `${Math.floor(Math.random() * 2) + 1}h ${Math.floor(Math.random() * 59)}m`,
+            critics: "A triumph of storytelling. Visuals that haunt you long after the credits roll.",
+            awards: Math.random() > 0.5 ? ["Palme d'Or Nominee", "Best Cinematography"] : [],
+            festivals: ["Sundance '23", "TIFF '24"]
         };
     });
 };
 
 let movies = parseData(rawDataString);
-let currentEditId = null;
+let currentFilter = 'all';
 
-/* --- 2. Core Rendering --- */
+/* --- 3. Rendering Logic (Grid vs List) --- */
 
-const grid = document.getElementById('movie-grid');
+const gridEl = document.getElementById('movie-grid');
+const listEl = document.getElementById('list-body');
+const gridContainer = document.getElementById('movie-grid');
+const listContainer = document.getElementById('movie-list');
 
-function renderCards(filter = 'all') {
-    grid.innerHTML = '';
-    
-    const filteredMovies = filter === 'all' 
-        ? movies 
-        : movies.filter(m => {
-            if(filter === 'Recommended') return m.status === 'Recommended';
-            if(filter === 'Watched') return m.status === 'Watched';
-            return m.type === filter;
-        });
+function render(viewMode = 'grid') {
+    const filtered = movies.filter(m => {
+        if (currentFilter === 'all') return true;
+        if (currentFilter === 'Watched') return m.status === 'Watched';
+        if (currentFilter === 'Recommended') return m.status === 'Recommended';
+        if (currentFilter === 'Plan to Watch') return m.status === 'Plan to Watch';
+        return true;
+    });
 
-    filteredMovies.forEach(movie => {
+    if (viewMode === 'grid') {
+        gridContainer.classList.remove('hidden');
+        listContainer.classList.add('hidden');
+        renderGrid(filtered);
+    } else {
+        gridContainer.classList.add('hidden');
+        listContainer.classList.remove('hidden');
+        renderList(filtered);
+    }
+}
+
+function renderGrid(data) {
+    gridEl.innerHTML = '';
+    data.forEach((m) => {
         const card = document.createElement('article');
         card.className = 'movie-card';
-        card.setAttribute('data-id', movie.id);
-        
-        card.innerHTML = `
-            <img src="${movie.poster}" class="poster-img" alt="${movie.title}" loading="lazy">
-            <div class="card-overlay">
-                <h3 class="card-title">${movie.title}</h3>
-                <div class="card-meta">
-                    <span class="rating-badge">${movie.rating}</span>
-                    <span>${movie.type}</span>
-                </div>
-                <button class="quick-book" onclick="openModal('${movie.id}')">
-                    <i class="fa-solid fa-ticket"></i> Get Tickets
-                </button>
-            </div>
-        `;
-        
-        // Add Physics
-        card.addEventListener('mousemove', handleTilt);
-        card.addEventListener('mouseleave', resetTilt);
-        card.addEventListener('click', (e) => {
-            if (!e.target.closest('.quick-book')) openModal(movie.id);
-        });
+        // Add random delays for the "Living Mosaic" feel
+        card.style.animationDelay = `-${Math.random() * 5}s`;
 
-        grid.appendChild(card);
+        card.innerHTML = `<img src="${m.poster}" class="poster-img" alt="${m.title}">`;
+        card.onclick = () => openModal(m);
+        gridEl.appendChild(card);
     });
 }
 
-/* --- 3. Physics / Micro-interactions --- */
-
-function handleTilt(e) {
-    const card = e.currentTarget;
-    const rect = card.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    
-    // Calculate rotation range (-15 to 15 deg)
-    const xRot = -((y - rect.height/2) / rect.height) * 15;
-    const yRot = ((x - rect.width/2) / rect.width) * 15;
-    
-    card.style.transform = `perspective(1000px) rotateX(${xRot}deg) rotateY(${yRot}deg) scale3d(1.02, 1.02, 1.02)`;
+function renderList(data) {
+    listEl.innerHTML = '';
+    data.forEach(m => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td style="font-weight:bold; color:white;">${m.title}</td>
+            <td>${m.year}</td>
+            <td><span class="badge" style="background:#333">${m.type}</span></td>
+            <td><i class="fa-solid fa-star" style="color:#e50914"></i> ${m.rating}</td>
+            <td>${m.status}</td>
+            <td><button class="icon-btn" onclick='openModal(${JSON.stringify(m).replace(/'/g, "&#39;")})'>
+                <i class="fa-solid fa-eye"></i>
+            </button></td>
+        `;
+        listEl.appendChild(row);
+    });
 }
 
-function resetTilt(e) {
-    e.currentTarget.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale3d(1, 1, 1)';
-}
+/* --- 4. Sorting Logic --- */
+let sortDir = 1;
+window.sortTable = (key) => {
+    sortDir *= -1;
+    movies.sort((a, b) => {
+        if (a[key] < b[key]) return -1 * sortDir;
+        if (a[key] > b[key]) return 1 * sortDir;
+        return 0;
+    });
+    render(listContainer.classList.contains('hidden') ? 'grid' : 'list');
+};
 
-/* --- 4. Modal & Booking System --- */
-
+/* --- 5. Archivist Modal --- */
 const modal = document.getElementById('movie-modal');
-const closeModalBtn = document.querySelector('.close-modal');
 
-function openModal(id) {
-    const movie = movies.find(m => m.id === id);
-    if(!movie) return;
+function openModal(movie) {
+    // If passed as object from grid, use it. If string ID, find it.
+    const m = (typeof movie === 'string') ? movies.find(x => x.id === movie) : movie;
+    if (!m) return;
 
-    // Populate Modal
-    document.getElementById('modal-title').innerText = movie.title;
-    document.getElementById('modal-rating').innerText = movie.rating;
-    document.getElementById('modal-year').innerText = movie.year;
-    document.getElementById('modal-genre').innerText = movie.type;
-    document.getElementById('modal-duration').innerText = movie.duration;
-    document.getElementById('modal-desc').innerText = movie.synopsis;
-    document.getElementById('modal-backdrop-img').src = movie.backdrop;
+    document.getElementById('modal-title').innerText = m.title;
+    document.getElementById('modal-rating').innerText = m.rating;
+    document.getElementById('modal-year').innerText = m.year;
+    document.getElementById('modal-type').innerText = m.type;
+    document.getElementById('modal-duration').innerText = m.duration;
+    document.getElementById('modal-synopsis').innerText = m.synopsis;
+    document.getElementById('modal-critics').innerText = m.critics;
+    document.getElementById('modal-status').innerText = m.status;
+    document.getElementById('modal-backdrop-img').src = m.backdrop;
 
-    // Randomize Occupancy
-    const occupancy = Math.floor(Math.random() * (90 - 40) + 40);
-    document.getElementById('occupancy-fill').style.width = `${occupancy}%`;
+    // Awards
+    const awardsContainer = document.getElementById('modal-awards');
+    awardsContainer.innerHTML = m.awards.length
+        ? m.awards.map(a => `<span class="award-pill"><i class="fa-solid fa-trophy"></i> ${a}</span>`).join('')
+        : '<span style="color:#666">No major awards recorded.</span>';
 
-    // Hallucinate Cast
-    const castContainer = document.getElementById('modal-cast');
-    castContainer.innerHTML = '';
-    for(let i=0; i<6; i++) {
-        castContainer.innerHTML += `
-            <div class="cast-member">
-                <img src="https://i.pravatar.cc/150?img=${i + 10}" class="cast-avatar" alt="Actor">
-                <div style="font-size:0.7rem; color:#aaa;">Actor ${i+1}</div>
-            </div>
-        `;
-    }
-
-    // Reset Booking View
-    document.querySelector('.seat-map-view').classList.add('hidden');
-    document.querySelector('.success-view').classList.add('hidden');
-    document.querySelector('.modal-body').classList.remove('hidden');
-
-    // Generate Showtimes
-    const times = ['10:30 AM', '1:15 PM', '4:45 PM', '8:00 PM'];
-    const timeContainer = document.getElementById('showtimes-container');
-    timeContainer.innerHTML = '';
-    times.forEach(t => {
-        timeContainer.innerHTML += `<span class="showtime-chip" onclick="selectTime(this)">${t}</span>`;
-    });
+    // Festivals
+    const festContainer = document.getElementById('modal-festivals');
+    festContainer.innerHTML = m.festivals.map(f => `<li>${f}</li>`).join('');
 
     modal.classList.add('open');
 }
 
-closeModalBtn.addEventListener('click', () => {
+document.querySelector('.close-modal').addEventListener('click', () => {
     modal.classList.remove('open');
 });
 
-// Showtimes
-window.selectTime = function(el) {
-    document.querySelectorAll('.showtime-chip').forEach(c => c.classList.remove('selected'));
-    el.classList.add('selected');
-}
-
-// Booking Flow
-document.getElementById('start-booking-btn').addEventListener('click', () => {
-    document.querySelector('.modal-body').classList.add('hidden'); // actually hide main body via css or scroll
-    // Better UX: Overlay the seat map
-    document.querySelector('.seat-map-view').classList.remove('hidden');
-    generateSeats();
+// Close modal on backdrop click
+modal.addEventListener('click', (e) => {
+    if (e.target === modal) modal.classList.remove('open');
 });
 
-function generateSeats() {
-    const seatGrid = document.getElementById('seats-grid');
-    seatGrid.innerHTML = '';
-    let price = 0;
-    
-    // 64 Seats
-    for(let i=0; i<64; i++) {
-        const seat = document.createElement('div');
-        seat.className = 'seat';
-        
-        // Randomly book some
-        if(Math.random() < 0.3) {
-            seat.classList.add('booked');
-        } else {
-            seat.addEventListener('click', () => {
-                if(seat.classList.contains('selected')) {
-                    seat.classList.remove('selected');
-                    price -= 12;
-                } else {
-                    seat.classList.add('selected');
-                    price += 12;
-                }
-                document.getElementById('total-price').innerText = price;
-            });
-        }
-        seatGrid.appendChild(seat);
-    }
-}
+/* --- 6. Event Listeners --- */
 
-document.getElementById('confirm-booking').addEventListener('click', () => {
-    document.querySelector('.seat-map-view').classList.add('hidden');
-    document.querySelector('.success-view').classList.remove('hidden');
+// View Toggles
+document.getElementById('view-grid').addEventListener('click', function () {
+    this.classList.add('active');
+    document.getElementById('view-list').classList.remove('active');
+    render('grid');
 });
 
-/* --- 5. Filters & Edit Mode Features --- */
+document.getElementById('view-list').addEventListener('click', function () {
+    this.classList.add('active');
+    document.getElementById('view-grid').classList.remove('active');
+    render('list');
+});
 
-// Filter Logic
+// Filters
 document.querySelectorAll('.filter-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
         document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
         e.target.classList.add('active');
-        renderCards(e.target.dataset.filter);
+        currentFilter = e.target.dataset.filter;
+        const mode = listContainer.classList.contains('hidden') ? 'grid' : 'list';
+        render(mode);
     });
 });
 
 // Theme Toggle
 document.getElementById('theme-toggle').addEventListener('click', () => {
-    const body = document.body;
-    const current = body.getAttribute('data-theme');
-    body.setAttribute('data-theme', current === 'light' ? 'dark' : 'light');
+    const current = document.body.getAttribute('data-theme');
+    document.body.setAttribute('data-theme', current === 'light' ? 'dark' : 'light');
     const icon = document.querySelector('#theme-toggle i');
     icon.classList.toggle('fa-sun');
     icon.classList.toggle('fa-moon');
 });
 
-/* --- 6. Edit/Import/Export System --- */
-
-const editBtn = document.getElementById('edit-mode-btn');
-const tableContainer = document.getElementById('edit-table-container');
-const gridContainer = document.getElementById('movie-grid');
-
-let editMode = false;
-
-editBtn.addEventListener('click', () => {
-    editMode = !editMode;
-    if(editMode) {
-        editBtn.style.background = 'var(--primary)';
-        editBtn.style.color = 'white';
-        gridContainer.classList.add('hidden');
-        tableContainer.classList.remove('hidden');
-        renderEditTable();
-    } else {
-        editBtn.style.background = 'transparent';
-        editBtn.style.color = 'var(--primary)';
-        gridContainer.classList.remove('hidden');
-        tableContainer.classList.add('hidden');
-        renderCards(); // Re-render grid with updates
-    }
-});
-
-function renderEditTable() {
-    const tbody = document.getElementById('edit-table-body');
-    tbody.innerHTML = '';
-    movies.forEach((m, index) => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td><input class="edit-input" value="${m.title}" onchange="updateMovie(${index}, 'title', this.value)"></td>
-            <td><input class="edit-input" value="${m.type}" onchange="updateMovie(${index}, 'type', this.value)"></td>
-            <td><input class="edit-input" value="${m.rating}" onchange="updateMovie(${index}, 'rating', this.value)"></td>
-            <td><input class="edit-input" value="${m.status}" onchange="updateMovie(${index}, 'status', this.value)"></td>
-            <td><button class="icon-btn" onclick="deleteMovie(${index})"><i class="fa-solid fa-trash"></i></button></td>
-        `;
-        tbody.appendChild(row);
+// Edit Mode (Only for Localhost)
+if (isLocal) {
+    document.getElementById('edit-mode-btn').addEventListener('click', () => {
+        alert("Edit functionality active. (Simulated for Demo)");
+        // Logic to switch to editable table rows would go here
     });
 }
 
-window.updateMovie = (index, field, value) => {
-    movies[index][field] = value;
-    // Local persistence could be added here: localStorage.setItem('movies', JSON.stringify(movies));
-};
-
-window.deleteMovie = (index) => {
-    movies.splice(index, 1);
-    renderEditTable();
-};
-
-// Export to CSV
-document.getElementById('export-btn').addEventListener('click', () => {
-    let csvContent = "data:text/csv;charset=utf-8,";
-    csvContent += "ID,Title,Type,Rating,Status\n";
-    
-    movies.forEach(m => {
-        csvContent += `${m.id},${m.title},${m.type},${m.rating},${m.status}\n`;
-    });
-    
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "cinemascope_data.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-});
-
-// Import CSV
-document.getElementById('import-file').addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    const reader = new FileReader();
-    
-    reader.onload = function(evt) {
-        const text = evt.target.result;
-        // Simple CSV parser
-        const rows = text.split('\n').slice(1); // skip header
-        const newMovies = rows.filter(r => r).map(row => {
-            const cols = row.split(',');
-            return {
-                id: cols[0],
-                title: cols[1],
-                type: cols[2],
-                rating: cols[3],
-                status: cols[4],
-                poster: `https://placehold.co/400x600/1a1a1a/FFF?text=${encodeURIComponent(cols[1])}`,
-                backdrop: `https://placehold.co/1200x600/111/333?text=${encodeURIComponent(cols[1])}`,
-                synopsis: "Imported movie.",
-                year: "2024",
-                duration: "2h"
-            };
-        });
-        
-        movies = newMovies;
-        if(editMode) renderEditTable();
-        else renderCards();
-        alert(`Imported ${newMovies.length} titles.`);
-    };
-    
-    reader.readAsText(file);
-});
-
-// Init
-renderCards();
+// Initial Render
+render('grid');
