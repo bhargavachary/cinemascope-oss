@@ -395,7 +395,7 @@
   },
   {
     "id": 25,
-    "title": "Sh\u014dgun",
+    "title": "Shōgun",
     "type": "Series",
     "status": "Recommended",
     "rating": 0,
@@ -409,7 +409,7 @@
       "Political",
       "Epic"
     ],
-    "src": "sh\u014dgun.jpg",
+    "src": "shōgun.jpg",
     "has_poster": true
   },
   {
@@ -903,8 +903,8 @@
     "imdbID": null,
     "language": "Hindi",
     "genres": [],
-    "src": "haq.jpg",
-    "has_poster": true
+    "src": "haq.svg",
+    "has_poster": false
   },
   {
     "id": 56,
@@ -942,8 +942,8 @@
     "imdbID": null,
     "language": "Hindi",
     "genres": [],
-    "src": "hrudayapoorvam.jpg",
-    "has_poster": true
+    "src": "hrudayapoorvam.svg",
+    "has_poster": false
   },
   {
     "id": 59,

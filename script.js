@@ -4,15 +4,16 @@
 const isLocal = ['localhost','127.0.0.1',''].includes(location.hostname);
 if (isLocal) document.getElementById('local-controls')?.classList.remove('hidden');
 
-/* ═══════ 2. Real Poster URLs via TMDB image CDN ═══════ */
-// These are real TMDB poster paths — free image CDN, no API key needed for images
-// Format: https://image.tmdb.org/t/p/w500/<path>
-const POSTER_MAP = {
+/* ═══════ 2. Poster Engine — manifest + TMDB inline fallback ═══════ */
+// Locally-cached posters (populated from assets/manifest.json at boot)
+const posterManifest = {};
+
+// Curated TMDB CDN paths for the most popular titles — instant fallback
+const TMDB_MAP = {
     "Breaking Bad":              "/ztkUQFLlC19CCMYHW9o1zWhJRNq.jpg",
     "Chernobyl":                 "/hlLXt2tOPT6RRnjiUmoxyG1LTFi.jpg",
     "The Shawshank Redemption":  "/9cjIGRKEpgnEz4AqTKMfBg6ESOA.jpg",
     "Game of Thrones":           "/1XS1oqL89opfnbLl8WnZY1O1uJx.jpg",
-    "Daman":                     "/4POTUOxPWaVFg30wIsmvUGTr86I.jpg",
     "Forrest Gump":              "/arw2vcBveWOVZr6pxd9XTd1TdQa.jpg",
     "Severance":                 "/lFf6LLrQjYEuEMjiTDRBMRqGfl1.jpg",
     "Dark":                      "/apbrbWs8M9lyOpJYU5WXrpFbk1Z.jpg",
@@ -22,12 +23,9 @@ const POSTER_MAP = {
     "Westworld":                 "/y55oBgC1JMVRJKhgyOsGkFBPqBM.jpg",
     "3 Idiots":                  "/66A9MqXOyVFCssoloscw79z8Tew.jpg",
     "Prison Break":              "/5E1BhkCgjLBlqx557Z5yzcN0i88.jpg",
-    "Maharaja":                  "/hpHAdVliO5rSFEMBfCLmawBnwvx.jpg",
     "A Beautiful Mind":          "/zwzWCmH72OSC9NA0ipoqw5Zjya8.jpg",
     "Jurassic Park":             "/oU7Oez2kCnl9ISo75VUvpiCxPyg.jpg",
     "Die Hard":                  "/yFihWxQcmqcaBR31QM6Y8gT6aYV.jpg",
-    "Drishyam":                  "/huPMkVhxuXGbIzPGTdVK2rrBz8b.jpg",
-    "Article 15":                "/mNxfO1LxSQlFatj4n3V2g2MYJRY.jpg",
     "The Night Manager":         "/hWxVhWGIAIWrY4fmvpRfxJB3AOc.jpg",
     "Harry Potter Series":       "/wuMc08IPKEatf9rnMNXvIDxqP4W.jpg",
     "Spider-Man 2":              "/olxpyq9kJAZ2NU1siLshhhXslPY.jpg",
@@ -35,20 +33,18 @@ const POSTER_MAP = {
     "Anora":                     "/aHqONpMOFcoePp3UQAOQMK0kEIu.jpg",
     "Taare Zameen Par":          "/jSJNi0WINZF8IsnWniWOJCk0763.jpg",
     "Wall-E":                    "/hbhFnRzzg6ZDmm8YAmxBnQpQIPh.jpg",
-    "Stolen":                    "/1DUNZ5coJf7T7c3lHeJnEbfcBJ5.jpg",
-    "Homebound":                 "/97P79e0pQGRkuZ4ZflxB20GvVqv.jpg",
     "Mirai":                     "/wLFfAH39FDN26elFHlWiLOSXQl4.jpg",
-    "Sister Midnight":           "/5mhBX1G40N5JG3bKBcpCTHaLiIO.jpg",
     "Sector 36":                 "/4LNpcsLSiTQYPLbVOEFuwmJHxVw.jpg",
     "Kohrra":                    "/bwHBnWz1MSTwwBblTpmhAGKEOLR.jpg",
     "Bramayugam":                "/eJxKQsDBB2y5MuUPq1lHFcwmw1o.jpg",
     "Kishkindha Kaandam":        "/l2hGVsls4JfU1VJ66DIOXgHPjFM.jpg",
-    "Severance":                 "/lFf6LLrQjYEuEMjiTDRBMRqGfl1.jpg",
-    "Ponman":                    "/5r7dGh9FsQYYhITsGMRWluXW14Q.jpg",
-    "Haq":                       "/pThyQovXQrw2m0s9x82twj48Jq4.jpg",
+    "Maharaja":                  "/hpHAdVliO5rSFEMBfCLmawBnwvx.jpg",
+    "Article 15":                "/mNxfO1LxSQlFatj4n3V2g2MYJRY.jpg",
+    "Drishyam":                  "/huPMkVhxuXGbIzPGTdVK2rrBz8b.jpg",
+    "Sister Midnight":           "/5mhBX1G40N5JG3bKBcpCTHaLiIO.jpg",
 };
 
-// Curated cinematic Unsplash images as fallback for titles not in TMDB map
+// Cinematic Unsplash fallback pool (last resort if all else fails)
 const FALLBACK_IMAGES = [
     "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=480&q=80",
     "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=480&q=80",
@@ -69,7 +65,11 @@ const FALLBACK_IMAGES = [
 ];
 
 function getPoster(title) {
-    if (POSTER_MAP[title]) return "https://image.tmdb.org/t/p/w500" + POSTER_MAP[title];
+    // 1. Prefer locally cached poster from manifest (downloaded by fetch_assets.py)
+    if (posterManifest[title]) return posterManifest[title];
+    // 2. Inline TMDB CDN (high quality, no API key needed for images)
+    if (TMDB_MAP[title]) return "https://image.tmdb.org/t/p/w500" + TMDB_MAP[title];
+    // 3. Hash-stable Unsplash cinematic fallback
     const hash = title.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
     return FALLBACK_IMAGES[hash % FALLBACK_IMAGES.length];
 }
@@ -527,5 +527,14 @@ document.addEventListener('mousemove', e => {
 });
 document.addEventListener('mouseleave', () => { spot.style.opacity = '0'; spotOn = false; });
 
-/* ═══════ 13. Boot ═══════ */
-render('grid');
+/* ═══════ 13. Boot — load manifest then render ═══════ */
+fetch('assets/manifest.json')
+    .then(r => r.ok ? r.json() : Promise.reject())
+    .then(data => {
+        data.forEach(item => {
+            if (item.has_poster && item.src)
+                posterManifest[item.title] = 'assets/posters/' + item.src;
+        });
+    })
+    .catch(() => { /* manifest unavailable — inline maps cover popular titles */ })
+    .finally(() => render('grid'));
