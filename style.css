@@ -411,6 +411,81 @@ main {
     color: var(--gold);
 }
 
+/* ═══════ 13. OTT Streaming Availability ═══════ */
+.ott-block {
+    display: flex; flex-direction: column; gap: 8px;
+}
+
+.ott-rail {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+}
+
+.ott-pill {
+    display: inline-flex; align-items: center;
+    padding: 4px 12px;
+    border-radius: var(--radius-pill);
+    font-size: .72rem; font-weight: 600;
+    border: 1px solid;
+    white-space: nowrap;
+    cursor: default;
+}
+
+/* Subscription (Netflix, Prime, Hotstar …) */
+.ott-pill.ott-flatrate {
+    background: rgba(48,209,88,.12);
+    border-color: rgba(48,209,88,.28);
+    color: var(--green);
+}
+
+/* Free / ad-supported (YouTube, MX Player …) */
+.ott-pill.ott-free,
+.ott-pill.ott-ads {
+    background: rgba(10,132,255,.10);
+    border-color: rgba(10,132,255,.24);
+    color: var(--blue);
+}
+
+/* Rent */
+.ott-pill.ott-rent {
+    background: var(--gold-dim);
+    border-color: rgba(255,214,10,.22);
+    color: var(--gold);
+}
+
+/* Buy */
+.ott-pill.ott-buy {
+    background: rgba(255,69,58,.10);
+    border-color: rgba(255,69,58,.22);
+    color: var(--primary);
+}
+
+.ott-unavail {
+    color: var(--text-subtle);
+    font-size: .75rem;
+    font-style: italic;
+}
+
+.ott-jw-link {
+    font-size: .72rem; font-weight: 600;
+    color: var(--text-muted);
+    text-decoration: none;
+    padding: 3px 8px;
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-pill);
+    transition: color .18s, border-color .18s;
+}
+.ott-jw-link:hover { color: var(--text); border-color: rgba(255,255,255,.22); }
+
+/* ── Last-synced footer ── */
+.last-enriched-text {
+    display: block;
+    text-align: right;
+    font-size: .63rem;
+    color: var(--text-subtle);
+    font-style: italic;
+    padding-top: 2px;
+}
+
 /* ═══════ 10. Cursor Spotlight ═══════ */
 .spotlight {
     position: fixed; width: 420px; height: 420px;

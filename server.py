@@ -22,6 +22,18 @@ BASE_DIR = Path(__file__).parent.resolve()
 DATA_FILE = BASE_DIR / "data" / "library.json"
 
 OMDB_API_KEY = os.environ.get("OMDB_API_KEY", "")
+TMDB_API_KEY = os.environ.get("TMDB_API_KEY", "")
+
+TMDB_BASE    = "https://api.themoviedb.org/3"
+TMDB_IMG     = "https://image.tmdb.org/t/p/w500"
+
+# India OTT provider id → display name (subset of ott_locator.py catalogue)
+INDIA_OTT_PROVIDERS = {
+    8: "Netflix", 119: "Amazon Prime Video", 122: "Disney+ Hotstar",
+    220: "JioCinema", 237: "SonyLIV", 232: "Zee5", 121: "Voot",
+    505: "MX Player", 532: "Aha", 350: "Apple TV+", 191: "MUBI",
+    615: "Sun NXT", 444: "Hoichoi",
+}
 
 WIKIDATA_SEARCH = "https://www.wikidata.org/w/api.php"
 WIKIDATA_ENTITY = "https://www.wikidata.org/wiki/Special:EntityData/{qid}.json"
@@ -185,6 +197,95 @@ def fetch_wikidata_fallback(title, media_type):
     return meta
 
 
+# ─── TMDB helpers (used by /api/enrich) ──────────────────────────────────────
+
+def _tmdb_get(path, params=None):
+    if not TMDB_API_KEY:
+        return None
+    p = {"api_key": TMDB_API_KEY, "language": "en-US", **(params or {})}
+    try:
+        r = requests.get(f"{TMDB_BASE}{path}", params=p, timeout=10)
+        r.raise_for_status()
+        return r.json()
+    except Exception:
+        return None
+
+
+def _tmdb_search(title, media_type):
+    endpoint = "/search/movie" if media_type == "Movie" else "/search/tv"
+    data = _tmdb_get(endpoint, {"query": title, "include_adult": False})
+    return (data or {}).get("results", [])
+
+
+def _tmdb_detail(tmdb_id, media_type):
+    media = "movie" if media_type == "Movie" else "tv"
+    return _tmdb_get(f"/{media}/{tmdb_id}")
+
+
+def _tmdb_external_ids(tmdb_id, media_type):
+    media = "movie" if media_type == "Movie" else "tv"
+    data  = _tmdb_get(f"/{media}/{tmdb_id}/external_ids")
+    return (data or {}).get("imdb_id")
+
+
+def _tmdb_ott_india(tmdb_id, media_type):
+    media   = "movie" if media_type == "Movie" else "tv"
+    data    = _tmdb_get(f"/{media}/{tmdb_id}/watch/providers")
+    in_data = (data or {}).get("results", {}).get("IN", {})
+    link    = in_data.get("link", "")
+
+    options = []
+    seen: set = set()
+    for ott_type in ("flatrate", "free", "ads", "rent", "buy"):
+        for p in in_data.get(ott_type, []):
+            pid = p.get("provider_id")
+            if pid in seen:
+                continue
+            seen.add(pid)
+            name = INDIA_OTT_PROVIDERS.get(pid) or p.get("provider_name", f"Provider {pid}")
+            logo = ("https://image.tmdb.org/t/p/original" + p["logo_path"]) if p.get("logo_path") else None
+            options.append({
+                "provider":    name,
+                "provider_id": pid,
+                "type":        ott_type,
+                "logo_url":    logo,
+            })
+    return options, link
+
+
+# ─── Rating normalization & weighted score (inline, mirrors enrich_library.py) ─
+
+def _to_float(v):
+    if v is None:
+        return None
+    s = str(v).replace("%", "").strip()
+    if s in ("", "N/A", "—", "null"):
+        return None
+    try:
+        return float(s)
+    except ValueError:
+        return None
+
+
+def _compute_weighted_score(item):
+    imdb = _to_float(item.get("imdb_rating") or item.get("imdbRating"))
+    rt   = _to_float(item.get("rotten_tomatoes") or item.get("rottenTomatoes"))
+    lb   = _to_float(item.get("letterboxd_rating"))
+
+    rt_n = (rt  / 10) if rt  is not None else None
+    lb_n = (lb  *  2) if lb  is not None else None
+
+    parts = []
+    if imdb is not None: parts.append((imdb * 0.4, 0.4))
+    if rt_n  is not None: parts.append((rt_n * 0.3, 0.3))
+    if lb_n  is not None: parts.append((lb_n * 0.3, 0.3))
+
+    if not parts:
+        return None
+    score = sum(p[0] for p in parts) / sum(p[1] for p in parts)
+    return round(min(score, 10.0), 2)
+
+
 def refresh_metadata(item):
     title = item.get("title", "")
     media_type = "movie" if item.get("type", "Movie") == "Movie" else "series"
@@ -331,6 +432,76 @@ def api_refresh_metadata(item_id):
             meta = refresh_metadata(item)
             save_library(library)
             return jsonify({"item": meta})
+    return jsonify({"error": "Item not found"}), 404
+
+
+@app.route("/api/enrich/<int:item_id>", methods=["POST"])
+def api_enrich_item(item_id):
+    """
+    Full per-item enrichment pipeline (admin-UI facing).
+    Runs OMDB + Wikidata (existing), then TMDB metadata + India OTT discovery.
+    Normalises ratings and computes weighted_score.
+    Requires TMDB_API_KEY (+ optionally OMDB_API_KEY) in environment.
+    """
+    from datetime import datetime, timezone
+
+    library = load_library()
+    for item in library:
+        if item["id"] != item_id:
+            continue
+
+        # ── Existing OMDB + Wikidata flow ────────────────────────────────
+        refresh_metadata(item)
+
+        # ── TMDB: resolve tmdb_id if missing ─────────────────────────────
+        if TMDB_API_KEY and not item.get("tmdb_id"):
+            results = _tmdb_search(item["title"], item.get("type", "Movie"))
+            if results:
+                best = results[0]
+                item["tmdb_id"]  = best["id"]
+                if not item.get("imdbID"):
+                    item["imdbID"] = _tmdb_external_ids(best["id"], item.get("type", "Movie"))
+                t_field = "title" if item.get("type") == "Movie" else "name"
+                ot_field = "original_title" if item.get("type") == "Movie" else "original_name"
+                if best.get(ot_field) and best[ot_field] != best.get(t_field):
+                    item["original_title"] = best[ot_field]
+
+        # ── TMDB: metadata ────────────────────────────────────────────────
+        if TMDB_API_KEY and item.get("tmdb_id"):
+            detail = _tmdb_detail(item["tmdb_id"], item.get("type", "Movie"))
+            if detail:
+                if not item.get("genres"):
+                    item["genres"] = [g["name"] for g in detail.get("genres", [])]
+                if not item.get("plot") and detail.get("overview"):
+                    item["plot"] = detail["overview"]
+                if not item.get("runtime"):
+                    rt = detail.get("runtime") or (detail.get("episode_run_time") or [None])[0]
+                    if rt:
+                        item["runtime"] = f"{rt} min"
+                poster_path = detail.get("poster_path")
+                if poster_path:
+                    item["tmdb_poster_url"] = TMDB_IMG + poster_path
+                rd = detail.get("release_date") or detail.get("first_air_date", "")
+                if rd and not item.get("year"):
+                    item["year"] = rd[:4]
+
+        # ── TMDB: India OTT discovery ─────────────────────────────────────
+        if TMDB_API_KEY and item.get("tmdb_id"):
+            options, jw_link = _tmdb_ott_india(item["tmdb_id"], item.get("type", "Movie"))
+            item["streaming_in"] = options
+            if jw_link:
+                item["justwatch_url"] = jw_link
+
+        # ── Weighted score ────────────────────────────────────────────────
+        ws = _compute_weighted_score(item)
+        if ws is not None:
+            item["weighted_score"] = ws
+
+        item["last_enriched"] = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+
+        save_library(library)
+        return jsonify(item)
+
     return jsonify({"error": "Item not found"}), 404
 
 

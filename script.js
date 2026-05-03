@@ -8,6 +8,9 @@ if (isLocal) document.getElementById('local-controls')?.classList.remove('hidden
 // Locally-cached posters (populated from assets/manifest.json at boot)
 const posterManifest = {};
 
+// Enrichment data keyed by title (streaming, weighted_score, last_enriched)
+const enrichmentData = {};
+
 // Curated TMDB CDN paths for the most popular titles — instant fallback
 const TMDB_MAP = {
     "Breaking Bad":              "/ztkUQFLlC19CCMYHW9o1zWhJRNq.jpg",
@@ -451,6 +454,45 @@ function openModal(m) {
         ? m.awards.map(a => `<span class="award-pill"><i class="fa-solid fa-trophy"></i> ${a}</span>`).join('')
         : '<span style="color:var(--text-subtle);font-size:.78rem">No major awards on record.</span>';
 
+    /* ── OTT — India ──────────────────────────────────────────────────── */
+    const ottEl    = document.getElementById('modal-ott');
+    const ottBlock = document.getElementById('modal-ott-block');
+    if (m.streaming_in && m.streaming_in.length) {
+        const visible = m.streaming_in
+            .filter(s => ['flatrate', 'free', 'ads'].includes(s.type))
+            .slice(0, 8);
+        ottEl.innerHTML = visible.length
+            ? visible.map(s =>
+                `<span class="ott-pill ott-${s.type}" title="${s.type_label || s.type}">${s.provider}</span>`
+              ).join('')
+            : '<span class="ott-unavail">Rent / Buy only</span>';
+        if (m.justwatch_url)
+            ottEl.innerHTML += `<a href="${m.justwatch_url}" target="_blank" rel="noopener" class="ott-jw-link">All options ↗</a>`;
+    } else {
+        ottEl.innerHTML = '<span class="ott-unavail">Run the enrichment pipeline to fetch streaming data.</span>';
+    }
+
+    /* ── Weighted score ───────────────────────────────────────────── */
+    const wWrap = document.getElementById('modal-weighted-wrap');
+    const wSpan = document.getElementById('modal-weighted');
+    if (m.weighted_score) {
+        wSpan.textContent = '★ ' + m.weighted_score + ' weighted';
+        wWrap.classList.remove('hidden');
+    } else {
+        wWrap.classList.add('hidden');
+    }
+
+    /* ── Last enriched ─────────────────────────────────────────────── */
+    const leEl = document.getElementById('modal-last-enriched');
+    if (m.last_enriched) {
+        const d    = new Date(m.last_enriched);
+        const days = Math.floor((Date.now() - d) / 86400000);
+        leEl.textContent = days === 0 ? 'Synced today' : `Synced ${days}d ago`;
+        leEl.classList.remove('hidden');
+    } else {
+        leEl.classList.add('hidden');
+    }
+
     modal.classList.add('open');
     document.body.style.overflow = 'hidden';
 }
@@ -534,7 +576,23 @@ fetch('assets/manifest.json')
         data.forEach(item => {
             if (item.has_poster && item.src)
                 posterManifest[item.title] = 'assets/posters/' + item.src;
+            // Store any enrichment fields for modal display
+            enrichmentData[item.title] = item;
         });
     })
     .catch(() => { /* manifest unavailable — inline maps cover popular titles */ })
-    .finally(() => render('grid'));
+    .finally(() => {
+        // Merge enrichment fields into base movie objects
+        movies = movies.map(m => {
+            const e = enrichmentData[m.title];
+            if (!e) return m;
+            return {
+                ...m,
+                streaming_in:   e.streaming_in   || [],
+                weighted_score: e.weighted_score  || null,
+                last_enriched:  e.last_enriched   || null,
+                justwatch_url:  e.justwatch_url   || null,
+            };
+        });
+        render('grid');
+    });
