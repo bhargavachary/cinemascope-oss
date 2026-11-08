@@ -362,6 +362,17 @@ const listWrap = document.getElementById('movie-list');
 const listBody = document.getElementById('list-body');
 const modal    = document.getElementById('movie-modal');
 
+/* ═══════ 6b. Security & Formatting Helpers ═══════ */
+function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
 /* ═══════ 7. Render ═══════ */
 function render(view) {
     currentView = view || currentView;
@@ -382,18 +393,24 @@ function render(view) {
 
 function renderGrid(data) {
     gridEl.innerHTML = '';
+    if (!data || data.length === 0) {
+        gridEl.innerHTML = '<div class="empty-state" style="grid-column: 1 / -1; text-align: center; padding: 4rem 1rem; color: var(--text-subtle);"><i class="fa-solid fa-film" style="font-size: 2.5rem; margin-bottom: 1rem; opacity: 0.5;"></i><p>No titles found matching this view</p></div>';
+        return;
+    }
     const frag = document.createDocumentFragment();
     data.forEach((m, i) => {
         const card = document.createElement('article');
         card.className = 'movie-card';
         card.style.animationDelay = `${i * 35}ms`;
         card.setAttribute('aria-label', m.title);
+        const safeTitle = escapeHtml(m.title);
+        const metaText = (m.rating !== 'NR' ? '★ ' + escapeHtml(m.rating) + ' · ' : '') + escapeHtml(m.year);
         card.innerHTML = `
-            <img src="${m.poster}" class="poster-img" alt="${m.title}" loading="lazy"
+            <img src="${escapeHtml(m.poster)}" class="poster-img" alt="${safeTitle}" loading="lazy"
                  onerror="this.src='${FALLBACK_IMAGES[i % FALLBACK_IMAGES.length]}'">
             <div class="card-base-info">
-                <p class="card-title">${m.title}</p>
-                <p class="card-meta">${m.rating !== 'NR' ? '★ ' + m.rating + ' · ' : ''}${m.year}</p>
+                <p class="card-title">${safeTitle}</p>
+                <p class="card-meta">${metaText}</p>
             </div>`;
         card.addEventListener('click', () => openModal(m));
         frag.appendChild(card);
@@ -403,16 +420,25 @@ function renderGrid(data) {
 
 function renderList(data) {
     listBody.innerHTML = '';
+    if (!data || data.length === 0) {
+        listBody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:3rem 1rem;color:var(--text-subtle)"><i class="fa-solid fa-film" style="font-size:1.8rem;display:block;margin-bottom:0.5rem;opacity:0.5"></i>No titles found matching this view</td></tr>';
+        return;
+    }
     const frag = document.createDocumentFragment();
     data.forEach(m => {
         const tr = document.createElement('tr');
+        const safeTitle = escapeHtml(m.title);
+        const safeYear = escapeHtml(m.year);
+        const safeType = escapeHtml(m.type);
+        const safeRating = m.rating !== 'NR' ? '★ ' + escapeHtml(m.rating) : '—';
+        const safeStatus = escapeHtml(m.status);
         tr.innerHTML = `
-            <td style="font-weight:600">${m.title}</td>
-            <td>${m.year}</td>
-            <td>${m.type}</td>
-            <td>${m.rating !== 'NR' ? '★ ' + m.rating : '—'}</td>
-            <td><span class="status-chip" data-status="${m.status}">${m.status}</span></td>
-            <td><button class="icon-btn" title="View details"><i class="fa-solid fa-circle-info"></i></button></td>`;
+            <td style="font-weight:600">${safeTitle}</td>
+            <td>${safeYear}</td>
+            <td>${safeType}</td>
+            <td>${safeRating}</td>
+            <td><span class="status-chip" data-status="${safeStatus}">${safeStatus}</span></td>
+            <td><button class="icon-btn" title="View details" aria-label="View details for ${safeTitle}"><i class="fa-solid fa-circle-info"></i></button></td>`;
         tr.querySelector('.icon-btn').addEventListener('click', (e) => {
             e.stopPropagation();
             openModal(m);
@@ -569,30 +595,57 @@ document.addEventListener('mousemove', e => {
 });
 document.addEventListener('mouseleave', () => { spot.style.opacity = '0'; spotOn = false; });
 
-/* ═══════ 13. Boot — load manifest then render ═══════ */
-fetch('assets/manifest.json')
-    .then(r => r.ok ? r.json() : Promise.reject())
-    .then(data => {
-        data.forEach(item => {
-            if (item.has_poster && item.src)
-                posterManifest[item.title] = 'assets/posters/' + item.src;
-            // Store any enrichment fields for modal display
-            enrichmentData[item.title] = item;
-        });
-    })
-    .catch(() => { /* manifest unavailable — inline maps cover popular titles */ })
-    .finally(() => {
-        // Merge enrichment fields into base movie objects
-        movies = movies.map(m => {
-            const e = enrichmentData[m.title];
-            if (!e) return m;
+/* ═══════ 13. Boot — load library & manifest then render ═══════ */
+Promise.allSettled([
+    fetch('data/library.json').then(r => r.ok ? r.json() : Promise.reject('No library.json')),
+    fetch('assets/manifest.json').then(r => r.ok ? r.json() : Promise.reject('No manifest.json'))
+]).then(([libRes, manRes]) => {
+    if (libRes.status === 'fulfilled' && Array.isArray(libRes.value) && libRes.value.length > 0) {
+        movies = libRes.value.map((item, idx) => {
+            const year = item.year || (item.released ? String(item.released).slice(0, 4) : '2024');
+            const duration = (item.runtime && item.runtime !== 'N/A')
+                ? item.runtime
+                : (item.type === 'Series' ? '1 season' : '2h 00m');
+            const rating = (item.imdbRating && item.imdbRating !== 'N/A')
+                ? parseFloat(item.imdbRating)
+                : (item.rating || 0);
             return {
-                ...m,
-                streaming_in:   e.streaming_in   || [],
-                weighted_score: e.weighted_score  || null,
-                last_enriched:  e.last_enriched   || null,
-                justwatch_url:  e.justwatch_url   || null,
+                id:       item.id || String(idx + 1),
+                title:    item.title,
+                type:     item.type || 'Movie',
+                rating:   rating,
+                status:   item.status || 'Plan to Watch',
+                year:     year,
+                duration: duration,
+                tags:     item.tags || item.genres || [],
+                poster:   item.poster || getPoster(item.title),
+                synopsis: (item.plot && item.plot !== 'N/A') ? item.plot : SYNOPSES[idx % SYNOPSES.length],
+                critics:  item.rottenTomatoes || (item.metascore && item.metascore !== 'N/A' ? `${item.metascore}%` : CRITICS[idx % CRITICS.length]),
+                awards:   item.awards ? [item.awards] : (AWARDS_POOL[idx % AWARDS_POOL.length] || []),
+                imdbID:   item.imdbID || null,
+                language: item.language || null,
             };
         });
-        render('grid');
+    }
+
+    if (manRes.status === 'fulfilled' && Array.isArray(manRes.value)) {
+        manRes.value.forEach(item => {
+            if (item.has_poster && item.src)
+                posterManifest[item.title] = 'assets/posters/' + item.src;
+            enrichmentData[item.title] = item;
+        });
+    }
+
+    movies = movies.map(m => {
+        const e = enrichmentData[m.title];
+        if (!e) return m;
+        return {
+            ...m,
+            streaming_in:   e.streaming_in   || m.streaming_in   || [],
+            weighted_score: e.weighted_score || m.weighted_score || null,
+            last_enriched:  e.last_enriched  || m.last_enriched  || null,
+            justwatch_url:  e.justwatch_url  || m.justwatch_url  || null,
+        };
     });
+    render('grid');
+});

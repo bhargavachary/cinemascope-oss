@@ -43,14 +43,22 @@ app = Flask(__name__, static_folder=None)
 
 
 def load_library():
-    with open(DATA_FILE, "r", encoding="utf-8") as f:
-        return json.load(f)
+    if not DATA_FILE.exists():
+        return []
+    try:
+        with open(DATA_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception as e:
+        return []
 
 
 def save_library(data):
-    with open(DATA_FILE, "w", encoding="utf-8") as f:
+    DATA_FILE.parent.mkdir(parents=True, exist_ok=True)
+    tmp_file = DATA_FILE.with_suffix(".tmp")
+    with open(tmp_file, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=4, ensure_ascii=False)
         f.write("\n")
+    tmp_file.replace(DATA_FILE)
 
 
 def normalize_title(value):
@@ -350,7 +358,7 @@ def add_cors_headers(response):
 
 @app.route("/")
 def index():
-    return send_from_directory(str(BASE_DIR), "table.html")
+    return send_from_directory(str(BASE_DIR), "index.html")
 
 
 @app.route("/<path:path>")
@@ -360,7 +368,14 @@ def static_files(path):
 
 @app.route("/api/health")
 def api_health():
-    return jsonify({"status": "ok", "mode": "local"})
+    lib = load_library()
+    return jsonify({
+        "status": "ok",
+        "mode": "local",
+        "library_count": len(lib),
+        "omdb_configured": bool(OMDB_API_KEY),
+        "tmdb_configured": bool(TMDB_API_KEY),
+    })
 
 
 @app.route("/api/library", methods=["GET"])
@@ -370,22 +385,42 @@ def api_library():
 
 @app.route("/api/library", methods=["POST"])
 def api_add_item():
-    library = load_library()
-    body = request.json or {}
-    max_id = max((item["id"] for item in library), default=0)
-    body["id"] = max_id + 1
-    if not body.get("title"):
+    body = request.get_json(silent=True)
+    if not isinstance(body, dict):
+        return jsonify({"error": "Invalid JSON payload"}), 400
+    title = (body.get("title") or "").strip()
+    if not title:
         return jsonify({"error": "Title is required"}), 400
+
+    library = load_library()
+    max_id = max((item.get("id", 0) for item in library), default=0)
+
+    # Validate rating
+    raw_rating = body.get("rating", 0)
+    try:
+        rating = float(raw_rating)
+        rating = max(0.0, min(10.0, rating))
+    except (ValueError, TypeError):
+        rating = 0.0
+
+    media_type = body.get("type", "Movie")
+    if media_type not in ("Movie", "Series"):
+        media_type = "Movie"
+
+    status = body.get("status", "Plan to Watch")
+    if status not in ("Watched", "Plan to Watch", "Recommended"):
+        status = "Plan to Watch"
+
     item = {
-        "id": body["id"],
-        "title": body["title"],
-        "type": body.get("type", "Movie"),
-        "status": body.get("status", "Plan to Watch"),
+        "id": max_id + 1,
+        "title": title,
+        "type": media_type,
+        "status": status,
         "language": body.get("language", "English"),
-        "rating": body.get("rating", 0),
-        "genres": body.get("genres", []),
+        "rating": rating,
+        "genres": body.get("genres") if isinstance(body.get("genres"), list) else [],
         "imdbID": body.get("imdbID"),
-        "tags": body.get("tags", [])
+        "tags": body.get("tags") if isinstance(body.get("tags"), list) else []
     }
     library.append(item)
     save_library(library)
@@ -394,20 +429,37 @@ def api_add_item():
 
 @app.route("/api/library/<int:item_id>", methods=["PUT"])
 def api_update_item(item_id):
+    body = request.get_json(silent=True)
+    if not isinstance(body, dict):
+        return jsonify({"error": "Invalid JSON payload"}), 400
+
     library = load_library()
-    body = request.json or {}
     for i, item in enumerate(library):
-        if item["id"] == item_id:
+        if item.get("id") == item_id:
+            title = body.get("title", item.get("title", "")).strip()
+            if not title:
+                return jsonify({"error": "Title cannot be empty"}), 400
+
+            raw_rating = body.get("rating", item.get("rating", 0))
+            try:
+                rating = float(raw_rating)
+                rating = max(0.0, min(10.0, rating))
+            except (ValueError, TypeError):
+                rating = item.get("rating", 0)
+
+            genres = body.get("genres", item.get("genres", []))
+            tags = body.get("tags", item.get("tags", []))
+
             library[i] = {
                 **item,
-                "title": body.get("title", item["title"]),
-                "type": body.get("type", item["type"]),
-                "status": body.get("status", item["status"]),
+                "title": title,
+                "type": body.get("type", item.get("type", "Movie")),
+                "status": body.get("status", item.get("status", "Plan to Watch")),
                 "language": body.get("language", item.get("language", "English")),
-                "rating": body.get("rating", item.get("rating", 0)),
-                "genres": body.get("genres", item.get("genres", [])),
+                "rating": rating,
+                "genres": genres if isinstance(genres, list) else item.get("genres", []),
                 "imdbID": body.get("imdbID", item.get("imdbID")),
-                "tags": body.get("tags", item.get("tags", []))
+                "tags": tags if isinstance(tags, list) else item.get("tags", [])
             }
             save_library(library)
             return jsonify(library[i])
