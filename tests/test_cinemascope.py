@@ -66,6 +66,7 @@ class TestServerRoutes(unittest.TestCase):
         resp = self.client.get("/")
         self.assertEqual(resp.status_code, 200)
         self.assertIn(b"CINEMASCOPE", resp.data)
+        resp.close()
 
     def test_title_normalization(self):
         self.assertEqual(server.normalize_title("Kantara: Chapter 1!"), "kantarachapter1")

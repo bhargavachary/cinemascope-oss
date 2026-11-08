@@ -4,6 +4,7 @@
 
 [![Frontend](https://img.shields.io/badge/frontend-vanilla%20HTML%2FCSS%2FJS-brightgreen.svg)](index.html)
 [![Backend](https://img.shields.io/badge/backend-Flask%20%28Python%203%29-blue.svg)](server.py)
+[![Tests](https://img.shields.io/badge/tests-22%20passed-brightgreen.svg)](tests/)
 [![Architecture](https://img.shields.io/badge/architecture-no%20build%20step%20%7C%20static%20ready-orange.svg)](AGENTS.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
@@ -72,6 +73,16 @@ Commercial watchlist platforms (IMDb, Letterboxd, Trakt) are heavily cluttered w
 ---
 
 ## 5. Quick Start & Usage
+
+### Developer Commands (`Makefile`)
+
+```bash
+make test           # Run unit test suite (22 tests)
+make lint           # Compile-check all Python modules
+make serve          # Launch local Flask server on http://localhost:8080
+make serve-static   # Launch static web server on http://localhost:8000
+make update-readme  # Regenerate library statistics and highlights in README
+```
 
 ### Option A: Static Mode (Zero Installation)
 Simply open `index.html` in any modern web browser or serve via Python's built-in HTTP server:
