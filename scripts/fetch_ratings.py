@@ -11,6 +11,7 @@ Note: Many of these sources do not have public APIs and require HTML scraping.
       This script provides the structure to implement this with placeholder functions.
 """
 import json
+import os
 import time
 import urllib.parse
 from pathlib import Path
@@ -52,8 +53,10 @@ def load_library(json_path):
         return json.load(f)
 
 def save_library(json_path, data):
-    with open(json_path, 'w') as f:
-        json.dump(data, f, indent=2)
+    tmp_path = str(json_path) + ".tmp"
+    with open(tmp_path, 'w', encoding='utf-8') as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+    os.replace(tmp_path, json_path)
 
 def fetch_metacritic_score(title, content_type="movie"):
     """

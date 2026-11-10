@@ -477,7 +477,7 @@ function openModal(m) {
 
     const awardsEl = document.getElementById('modal-awards');
     awardsEl.innerHTML = m.awards?.length
-        ? m.awards.map(a => `<span class="award-pill"><i class="fa-solid fa-trophy"></i> ${a}</span>`).join('')
+        ? m.awards.map(a => `<span class="award-pill"><i class="fa-solid fa-trophy"></i> ${escapeHtml(a)}</span>`).join('')
         : '<span style="color:var(--text-subtle);font-size:.78rem">No major awards on record.</span>';
 
     /* ── OTT — India ──────────────────────────────────────────────────── */
@@ -489,11 +489,11 @@ function openModal(m) {
             .slice(0, 8);
         ottEl.innerHTML = visible.length
             ? visible.map(s =>
-                `<span class="ott-pill ott-${s.type}" title="${s.type_label || s.type}">${s.provider}</span>`
+                `<span class="ott-pill ott-${escapeHtml(s.type)}" title="${escapeHtml(s.type_label || s.type)}">${escapeHtml(s.provider)}</span>`
               ).join('')
             : '<span class="ott-unavail">Rent / Buy only</span>';
-        if (m.justwatch_url)
-            ottEl.innerHTML += `<a href="${m.justwatch_url}" target="_blank" rel="noopener" class="ott-jw-link">All options ↗</a>`;
+        if (m.justwatch_url && /^https?:\/\//i.test(m.justwatch_url))
+            ottEl.innerHTML += `<a href="${escapeHtml(m.justwatch_url)}" target="_blank" rel="noopener noreferrer" class="ott-jw-link">All options ↗</a>`;
     } else {
         ottEl.innerHTML = '<span class="ott-unavail">Run the enrichment pipeline to fetch streaming data.</span>';
     }

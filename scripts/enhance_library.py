@@ -3,6 +3,7 @@
 Enhance library.json with new fields: imdbID, language, genres
 """
 import json
+import os
 import re
 
 def infer_language(title, tags):
@@ -90,9 +91,11 @@ def enhance_library():
                 genres = non_lang_tags[:3]
             item['genres'] = genres
     
-    # Write back to file
-    with open('data/library.json', 'w', encoding='utf-8') as f:
+    # Write back to file atomically
+    tmp_file = 'data/library.json.tmp'
+    with open(tmp_file, 'w', encoding='utf-8') as f:
         json.dump(library, f, indent=4, ensure_ascii=False)
+    os.replace(tmp_file, 'data/library.json')
     
     print(f"Enhanced {len(library)} entries")
     print("\nSample enhanced entries:")

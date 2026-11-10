@@ -1,0 +1,19 @@
+name: Feature Request
+description: Suggest an enhancement or new feature for CinemaScope
+title: "[FEATURE]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Description
+      description: What limitation or workflow gap does this address?
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: Describe the feature, filter, or viewing mode you would like to see.
+    validations:
+      required: true

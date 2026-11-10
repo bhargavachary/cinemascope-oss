@@ -1,0 +1,33 @@
+name: Bug Report
+description: Create a report to help us fix an issue with CinemaScope
+title: "[BUG]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: Thank you for reporting an issue with CinemaScope!
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear description of the bug or rendering issue.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Steps or exact actions to reproduce the behavior.
+      placeholder: |
+        1. Open index.html in browser
+        2. Click on card '...'
+        3. Observe modal behavior
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser & OS
+      description: Browser name/version and operating system (e.g. Safari 17.5 / macOS Sonoma).
+    validations:
+      required: true

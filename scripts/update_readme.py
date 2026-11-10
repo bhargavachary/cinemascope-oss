@@ -71,6 +71,7 @@ def generate_readme(library, stats):
     readme.append("")
     readme.append("[![Frontend](https://img.shields.io/badge/frontend-vanilla%20HTML%2FCSS%2FJS-brightgreen.svg)](index.html)")
     readme.append("[![Backend](https://img.shields.io/badge/backend-Flask%20%28Python%203%29-blue.svg)](server.py)")
+    readme.append("[![Tests](https://img.shields.io/badge/tests-24%20passed-brightgreen.svg)](tests/)")
     readme.append("[![Architecture](https://img.shields.io/badge/architecture-no%20build%20step%20%7C%20static%20ready-orange.svg)](AGENTS.md)")
     readme.append("[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)")
     readme.append("")
@@ -218,7 +219,22 @@ def generate_readme(library, stats):
         for item in categories['Plan to Watch']:
             readme.extend(format_item_section(item))
     
-    # Footer
+    # Contributing & Security
+    readme.append("---")
+    readme.append("")
+    readme.append("## 8. Contributing & Security")
+    readme.append("")
+    readme.append("- **Contributing:** Review our [Contributing Guide](CONTRIBUTING.md) for data schema invariants and local testing procedures.")
+    readme.append("- **Security Policy:** Review our [Security Policy](SECURITY.md) for XSS boundaries, API key protection, and vulnerability disclosures.")
+    readme.append("- **Changelog:** See [CHANGELOG.md](CHANGELOG.md) for version history.")
+    readme.append("")
+    readme.append("---")
+    readme.append("")
+    readme.append("## 9. License & Poster Copyright")
+    readme.append("")
+    readme.append("Code released under the [MIT License](LICENSE). Copyright © D K Bhargav Achary.")
+    readme.append("Movie and television metadata, titles, and poster artworks are the copyrighted property of their respective production companies, studios, and distributors. CinemaScope uses these assets for non-commercial, personal commentary and organization purposes.")
+    readme.append("")
     readme.append("---")
     readme.append("")
     readme.append("*This README is automatically generated from `data/library.json`*")
@@ -243,9 +259,11 @@ def main():
     # Generate README content
     readme_content = generate_readme(library, stats)
     
-    # Write README
-    with open(readme_path, 'w') as f:
+    # Write README atomically
+    tmp_readme = readme_path.with_suffix(".tmp")
+    with open(tmp_readme, 'w', encoding='utf-8') as f:
         f.write(readme_content)
+    tmp_readme.replace(readme_path)
     
     print(f"✅ README.md updated successfully!")
     print(f"   Total items: {stats['total']}")

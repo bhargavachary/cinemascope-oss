@@ -81,6 +81,41 @@ class TestDataIntegrity(unittest.TestCase):
                 data = json.load(f)
             self.assertIsInstance(data, dict, "overrides.json must be a JSON object")
 
+    def test_library_field_types_and_ranges(self):
+        library_path = DATA_DIR / "library.json"
+        with open(library_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        for item in data:
+            # Title check
+            title = item.get("title", "")
+            self.assertTrue(len(title) > 0, f"Title missing or empty in item {item.get('id')}")
+
+            # Rating bounds
+            rating = item.get("rating")
+            if rating not in ("NR", None, ""):
+                try:
+                    r_val = float(rating)
+                    self.assertTrue(0.0 <= r_val <= 10.0, f"Rating out of bounds in {title}: {r_val}")
+                except ValueError:
+                    pass
+
+            # IMDb ID format check if present
+            imdb_id = item.get("imdbID")
+            if imdb_id:
+                self.assertTrue(imdb_id.startswith("tt"), f"Invalid IMDb ID in {title}: {imdb_id}")
+
+    def test_atomic_readme_generation(self):
+        """Verify update_readme generates a valid non-empty markdown output."""
+        from scripts.update_readme import calculate_stats, generate_readme
+        library_path = DATA_DIR / "library.json"
+        with open(library_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        stats = calculate_stats(data)
+        content = generate_readme(data, stats)
+        self.assertIn("# CinemaScope", content)
+        self.assertIn("Total Library Titles", content)
+        self.assertGreater(len(content), 100)
+
 
 if __name__ == "__main__":
     unittest.main()

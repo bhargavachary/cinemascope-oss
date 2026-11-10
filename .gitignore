@@ -15,11 +15,12 @@ build/
 .DS_Store
 Thumbs.db
 
-# IDE
+# IDE and agent scratchpads
 .vscode/
 .idea/
 *.swp
 *.swo
+SCRATCHPAD.md
 
 # Temporary files
 /tmp/
